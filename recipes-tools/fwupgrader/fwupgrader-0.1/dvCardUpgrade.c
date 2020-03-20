@@ -1,97 +1,106 @@
 
-bool goToBootloader(DWORD dwCompany)
+#include <string.h>
+#include <stdio.h>
+#include "dvCard.h"
+#include "dvCardUpgrade.h"
+
+
+void readFwVersion()
 {
-    bool ret = false;
+}
 
-    changeBaudrate(m_strCompanyCfg.at(GET_COMPANY_BAUDRATE(static_cast<int>(dwCompany))).toInt());
+BOOL goToBootloader(void)
+{
+    BOOL ret = FALSE;
 
-    m_transferProtocol->m_serial->m_port->clear();
-    m_transferProtocol->m_serial->write_data(m_strCompanyCfg.at(GET_COMPANY_BOOTCLI(static_cast<int>(dwCompany))).toUtf8());
-
-    this->thread()->sleep(2);
-
-    changeBaudrate(BOOTCODE_BAUDRATE);
-    m_transferProtocol->m_serial->m_port->clear();
+    if(rcSUCCESS == dvCard_Command_Write(eCMD_MODULE_IAP, eIAP_CMD_GO_TO_BOOTLOADER, 0, NULL)) {
+        ret = TRUE;    
+    }
 
     return ret;
 }
 
-bool setIapEnable(DWORD dwStartAddress, DWORD dwBinSize)
+BOOL setIapEnable(DWORD dwStartAddress, DWORD dwBinSize)
 {
-    bool ret = false;
+    BOOL ret = FALSE;
     BYTE cDummy = 0;
     sIAP_INFO sInfo;
 
     sInfo.dwStart = dwStartAddress;
     sInfo.dwSize = dwBinSize;
 
-    if(false == commandWrite(eIAP_CMD_APP_INFO, sizeof(sIAP_INFO), reinterpret_cast<BYTE *>(&sInfo)))
-        return false;
-
-    ret = commandWrite(eIAP_CMD_IAP_ENABLE, 0, &cDummy);
-
-    return ret;
-}
-
-bool writePageBinary(WORD wSize, BYTE *pcBuffer)
-{
-    bool ret = false;
-
-    ret = commandWrite(eIAP_CMD_BIN_DATA, wSize, pcBuffer);
-
-    return ret;
-}
-
-bool checkPageChecksum(DWORD dwChecksum)
-{
-    bool ret = false;
-    QByteArray retChecksum;
-    DWORD *pdwRetChecksum = nullptr;
-
-    ret = commandRead(eIAP_CMD_BIN_CHECK_SUM, retChecksum);
-
-    pdwRetChecksum = reinterpret_cast<DWORD *>(retChecksum.data());
-
-    if(0 == ((*pdwRetChecksum + dwChecksum) & 0xFFFFFFFF))
-    {
-        ret = true;
+    if(rcSUCCESS == dvCard_Command_Write(eCMD_MODULE_IAP, eIAP_CMD_APP_INFO, sizeof(sIAP_INFO), (BYTE *)&sInfo)) {
+        if(rcSUCCESS == dvCard_Command_Write(eCMD_MODULE_IAP, eIAP_CMD_IAP_ENABLE, 0, &cDummy)) {
+            printf("Iap Eanble Pass\n");
+            ret = TRUE;    
+        }
     }
 
     return ret;
 }
 
-bool programPage(DWORD dwAddress)
+BOOL writePageBinary(WORD wSize, BYTE *pcBuffer)
 {
-    bool ret = false;
+    BOOL ret = FALSE;
 
-    ret = commandWrite(eIAP_CMD_PROGRAMING, sizeof(DWORD), reinterpret_cast<BYTE*>(&dwAddress));
+    if(rcSUCCESS == dvCard_Command_Write(eCMD_MODULE_IAP, eIAP_CMD_BIN_DATA, wSize, pcBuffer)) {
+        ret = TRUE;    
+    }
 
     return ret;
 }
 
-bool writeTag(DWORD dwFwVersion, DWORD dwCompany)
+BOOL checkPageChecksum(DWORD dwChecksum)
 {
-    bool ret = false;
-    DWORD dwTag[2];
-    dwTag[0] = dwFwVersion;
-    dwTag[1] = dwCompany;
+    BOOL ret = FALSE;
+    DWORD dwRetChecksum = 0;
 
-    ret = commandWrite(eIAP_CMD_PROGRAMING_FINISH, sizeof(DWORD)*2, reinterpret_cast<BYTE*>(dwTag));
+    if(rcSUCCESS == dvCard_Command_Read(eCMD_MODULE_IAP, eIAP_CMD_BIN_CHECK_SUM, sizeof(DWORD), (BYTE *)&dwRetChecksum)) {
+        if(0 == ((dwRetChecksum + dwChecksum) & 0xFFFFFFFF)) {
+            ret = TRUE;
+        }
+    }
+
     return ret;
 }
 
-bool goToAppCode()
+BOOL programPage(DWORD dwAddress)
 {
-    bool ret = false;
-    ret = commandWrite(eIAP_CMD_RUN_APP, 0, nullptr);
+    BOOL ret = FALSE;
+
+    if(rcSUCCESS == dvCard_Command_Write(eCMD_MODULE_IAP, eIAP_CMD_PROGRAMING, sizeof(DWORD), (BYTE *)&dwAddress)) {
+        ret = TRUE;    
+    }
+
     return ret;
 }
 
+BOOL writeTag(DWORD dwFwVersion)
+{
+    BOOL ret = FALSE;
+
+    if(rcSUCCESS == dvCard_Command_Write(eCMD_MODULE_IAP, eIAP_CMD_PROGRAMING_FINISH, sizeof(DWORD), (BYTE *)&dwFwVersion)) {
+        ret = TRUE;    
+    }
+
+    return ret;
+}
+
+BOOL goToAppCode()
+{
+    BOOL ret = FALSE;
+    if(rcSUCCESS == dvCard_Command_Write(eCMD_MODULE_IAP, eIAP_CMD_RUN_APP, 0, NULL)) {
+        ret = TRUE;    
+    }
+    return ret;
+}
+
+#if 0
 void loadFile(const QString &fileName)
 {
-    sMEM_TAG_PARAM *psTag = nullptr;
+    sMEM_TAG_PARAM *psTag = NULL;
     quint32 address = 0;
-    char *data = nullptr;
+    char *data = NULL;
     QString string;
     int count = 0;
 
@@ -115,72 +124,76 @@ void loadFile(const QString &fileName)
 
     if(GET_COMPANY_SIZE > count){
         string = tr("%1 V%2.%3").arg(m_strCompanyCfg.at(GET_COMPANY_NAME(count))).arg((m_dwFwVersion >> 8 )&0x00FF).arg(QString::number(m_dwFwVersion&0x00FF));
-        showString(string);
+        //showString(string);
     }
     else {
-        popMessage(tr("Firmware file is incorrect!!\r\nPlease try again!!"));
+        //popMessage(tr("Firmware file is incorrect!!\r\nPlease try again!!"));
     }
 }
-
-bool upgrade(void)
+#endif // 0
+#define PAGE_SIZE (1024)
+BOOL upgrade(BYTE *pcBin, DWORD dwSize)
 {
-    WORD wTotalPages = 0;
+    DWORD dwVersion = 0x1234;
     DWORD dwChecksum = 0;
-    uint32 address = 0;
-    char *data = null;
+    DWORD dwAddress = 0, i = 0;
 
-    //enableButtons(false);
-    //showString("Starting please wait...");
-
-    m_intelToBin->reReadAll();
-    m_intelToBin->selectSegment(1);
+    dwAddress = 0x1A008200;
 
     // 1. go to bootloader
-    goToBootloader(m_dwCompany);
+    printf("1. Go to bootloader\n");
+    goToBootloader();
 
     // 2. Enable In Application Programming
-    if(false == setIapEnable(APP_START_ADDRESS, m_intelToBin->segmentSize())) {
-        //popMessage(tr("Can't enter programming mode!\r\nPlease check the connection and try again!!"));
+    printf("2. Enable Iap\n");
+    if(FALSE == setIapEnable(dwAddress, dwSize)) {
+        printf("Can't enter programming mode!\n");
         goto ERROR;
     }
 
     // 3. write binary data and check the checksum
-    while (0 != m_intelToBin->readPage(address, &data, 0)) {
-        //qDebug() << QString::number(address, 16);
+    printf("3. Write binary\n");
+    while (dwSize) {
         dwChecksum = 0;
 
-        for (uint32_t i = 0; i < m_intelToBin->pageSize; i++) {
-            dwChecksum += data[i];//static_cast<BYTE>(data[i]);
+        for (i = 0; i < PAGE_SIZE; i++) {
+            dwChecksum += pcBin[i];
         }
 
-        if(false == writePageBinary(static_cast<WORD>(m_intelToBin->pageSize), reinterpret_cast<BYTE *>(data))) {
-            //popMessage(tr("Transfer data Error!\r\nPlease try again!!"));
+        printf("4. Write Addr=0x%X, checksum = 0x%lX\n", dwAddress, dwChecksum);
+        if(FALSE == writePageBinary(PAGE_SIZE, pcBin)) {
+            printf("Transfer data Error!\n");
             goto ERROR;
         }
 
-        if(true == checkPageChecksum(dwChecksum)) {
-            programPage(address);
-            //updateProgress(0, (m_intelToBin->segmentPages()-1), wTotalPages++);
-        }
-        else {
-            //popMessage(tr("Checksum Error!\r\nPlease try again!!"));
+        printf("5. Read Checksum\n");
+        if(TRUE == checkPageChecksum(dwChecksum)) {
+            programPage(dwAddress);
+            pcBin += 1024;
+            dwSize -= PAGE_SIZE;
+            dwAddress += PAGE_SIZE;
+        } else {
+            printf("Checksum Error!\n");
             goto ERROR;
         }
     }
 
     // 4. write tag
-    if(false == writeTag(m_dwFwVersion, m_dwCompany)){
-        //popMessage(tr("Transfer data Error!\r\nPlease try again!!"));
+    printf("Write Tag\n");
+    if(FALSE == writeTag(dwVersion)){
+        printf("Transfer data Error!\n");
         goto ERROR;
     }
 
     // 5. go to appcode
+    printf("Go to appCode\n");
     goToAppCode();
-    //enableButtons(true);
-    return;
+
+    return TRUE;
 
 ERROR:
-    //enableButtons(true);
-    //showString("Error! Please try again.");
+    printf("Error! Please try again.");
+
+    return FALSE;
 }
 

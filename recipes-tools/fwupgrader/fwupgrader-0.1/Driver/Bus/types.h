@@ -31,6 +31,24 @@ typedef wchar_t * wstring;
 #define FALSE 0
 //#define BOOL unsigned long
 
+typedef enum
+{
+    rcERROR,
+    rcSUCCESS,
+    rcBUSY,
+
+    rcINVALID,
+} eRESULT;
+
+typedef enum
+{
+    nbSUCCESS,          // Request successfully completed
+    nbERROR,            // A failure occurred
+    nbPENDING,          // Non-blocking request is pending
+                        // (operation has not completed yet)
+    nbINVALID
+} eNBRESULT;
+
 #define MAX8 0xFF
 #define MAX15 0x7FFF
 #define MAX16 0xFFFF

@@ -103,6 +103,7 @@ int cardSlotInit()
 
     dvCard_Initial();
 
+#if 0
     do
     {
         dvCard_System_Ready_Get(&ready);
@@ -120,6 +121,7 @@ int cardSlotInit()
         cCount++;
     }
     while((0 == ready) && (cCount < RETRY_COUNT));
+#endif // 0
 
 #if 0
     if(TRUE == ready)

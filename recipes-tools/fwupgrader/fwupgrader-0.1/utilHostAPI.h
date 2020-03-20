@@ -24,7 +24,7 @@ typedef struct
 {
     UBYTE    cModule;
     UBYTE    cSubCmd;
-    UBYTE    acData[64 + 32];
+    UBYTE    acData[1024 + 32];
 } sPAYLOAD;
 
 typedef enum
@@ -40,6 +40,7 @@ typedef enum
     eACK_TYPE_NUMBERS,
 } eACK_TYPE;
 
+/*
 typedef enum
 {
     rcERROR,
@@ -47,6 +48,7 @@ typedef enum
     rcBUSY,
     rcINVALID,
 } eRESULT;
+*/
 
 // Cmd table §Î¦¡
 typedef struct

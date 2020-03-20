@@ -24,7 +24,7 @@
 #define SLEEP_BTWN_RW   (2)
 #define RETRY_COUNT     (1)
 
-#define DVCARD_DBG_LEVEL 0  // 0: Always, 1,2: Error, 3,4: Warning, 5,6: Info, 7,8,9: Debugging
+#define DVCARD_DBG_LEVEL 7  // 0: Always, 1,2: Error, 3,4: Warning, 5,6: Info, 7,8,9: Debugging
 #define DVCARD_DBG_PREFIX "dvCard.c > "
 #define DVCARD_DBG_MSG(level, cmd) if(level <= DVCARD_DBG_LEVEL){ cmd; }
 
@@ -220,7 +220,7 @@ eRESULT dvCard_Command_Write(eCMD_MODULE eModule, BYTE cSubCmd, WORD wSize, BYTE
 
         // utilCounterSet(eCOUNTER_TYPE_CARD_WRITE, TIME_OUT);
         // TODO: Use real timer instead of counter?
-        unsigned long count = 0x03ff;
+        unsigned long count = 0xFFFF;
         while(eMSG_STATE_DATA_READY > m_sCardState.eMsgParsingState)
         {
             utilHost_StateProcess(&m_sCardState, 100);
@@ -238,7 +238,7 @@ eRESULT dvCard_Command_Write(eCMD_MODULE eModule, BYTE cSubCmd, WORD wSize, BYTE
                 else
                 {
                     // utilCounterSet(eCOUNTER_TYPE_CARD_WRITE, TIME_OUT);
-                    count = 0x03ff;
+                    count = 0xFFFF;
                     dvCard_State_Reset(&m_sCardState);
                 }
             }
@@ -332,7 +332,7 @@ eRESULT dvCard_Command_Read(eCMD_MODULE eModule, BYTE cSubCmd, WORD wSize, BYTE 
                 dvCard_State_Reset(&m_sCardState);
 
                 // utilCounterSet(eCOUNTER_TYPE_CARD_READ, TIME_OUT);
-                unsigned long count = 0x03ff;
+                unsigned long count = 0xFFFF;
 
                 while(eMSG_STATE_DATA_READY > m_sCardState.eMsgParsingState)
                 {
@@ -352,7 +352,7 @@ eRESULT dvCard_Command_Read(eCMD_MODULE eModule, BYTE cSubCmd, WORD wSize, BYTE 
                         else
                         {
                             //utilCounterSet(eCOUNTER_TYPE_CARD_READ, TIME_OUT);
-                            count = 0x03ff;
+                            count = 0xFFFF;
                             dvCard_State_Reset(&m_sCardState);
                         }
                     }

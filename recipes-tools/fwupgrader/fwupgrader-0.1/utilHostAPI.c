@@ -75,7 +75,7 @@ static void utilHost_Package_Print(sMSG_STATE_DATA *psMsgData)
     printf("MSK_LIST_HOST, \n");
     for(wCount = 0; wCount <= (HEAD_PACK_SIZE + psMsgData->sMsgPacket.sPacketHeader.wPacketSize); wCount++)
     {
-        printf("MSK_LIST_HOST, 0x%02X ", *(pcBuffer + wCount));
+        printf("0x%02X ", *(pcBuffer + wCount));
     }
 
     (void)pcBuffer;
@@ -119,7 +119,7 @@ eMSG_STATE utilHost_StateProcess(sMSG_STATE_DATA *psMsgData, DWORD dwMilliSecond
 
     if(rcSUCCESS == psMsgData->fpReadFunc(1, &cReadBuffer))
     {
-        //        printf("MSK_LIST_HOST, 0x%02X ", cReadBuffer);
+        //printf("MSK_LIST_HOST, 0x%02X ", cReadBuffer);
 
         switch(psMsgData->eMsgParsingState)
         {
@@ -171,7 +171,7 @@ eMSG_STATE utilHost_StateProcess(sMSG_STATE_DATA *psMsgData, DWORD dwMilliSecond
                             else
                             {
                                 printf("CRC ERROR\n");
-                                utilHost_Package_Print(psMsgData);
+                                //utilHost_Package_Print(psMsgData);
                                 psMsgData->eMsgParsingState = eMSG_STATE_BAD_PACKET;
                             }
 
@@ -199,12 +199,12 @@ eMSG_STATE utilHost_StateProcess(sMSG_STATE_DATA *psMsgData, DWORD dwMilliSecond
                     if(0 == (0xFFFF & (psMsgData->sMsgPacket.sPacketHeader.wChecksum + psMsgData->wRecivedByteCRC)))
                     {
                         psMsgData->eMsgParsingState = eMSG_STATE_DATA_READY;
-                        //                        printf("\n");
+                        //printf("\n");
                     }
                     else
                     {
                         printf("CRC ERROR\n");
-                        utilHost_Package_Print(psMsgData);
+                        //utilHost_Package_Print(psMsgData);
                         psMsgData->eMsgParsingState = eMSG_STATE_BAD_PACKET;
                     }
 
