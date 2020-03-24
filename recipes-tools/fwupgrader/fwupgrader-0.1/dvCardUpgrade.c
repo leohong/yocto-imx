@@ -138,11 +138,12 @@ BOOL upgrade(BYTE *pcBin, DWORD dwSize)
     DWORD dwChecksum = 0;
     DWORD dwAddress = 0, i = 0;
 
-    dwAddress = 0x1A008200;
+    dwAddress = 0x1A008000;
 
     // 1. go to bootloader
     printf("1. Go to bootloader\n");
     goToBootloader();
+    usleep(2000 * 1000);
 
     // 2. Enable In Application Programming
     printf("2. Enable Iap\n");
@@ -168,6 +169,7 @@ BOOL upgrade(BYTE *pcBin, DWORD dwSize)
 
         printf("5. Read Checksum\n");
         if(TRUE == checkPageChecksum(dwChecksum)) {
+            printf("6. Prog\n");
             programPage(dwAddress);
             pcBin += 1024;
             dwSize -= PAGE_SIZE;
@@ -179,14 +181,14 @@ BOOL upgrade(BYTE *pcBin, DWORD dwSize)
     }
 
     // 4. write tag
-    printf("Write Tag\n");
+    printf("7. Write Tag\n");
     if(FALSE == writeTag(dwVersion)){
         printf("Transfer data Error!\n");
         goto ERROR;
     }
 
     // 5. go to appcode
-    printf("Go to appCode\n");
+    printf("8. Go to appCode\n");
     goToAppCode();
 
     return TRUE;
