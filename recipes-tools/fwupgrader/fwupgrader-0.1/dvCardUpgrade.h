@@ -29,7 +29,7 @@ BOOL programPage(DWORD dwAddress);
 BOOL writeTag(DWORD dwFwVersion);
 BOOL goToAppCode();
 //void loadFile(const QString &fileName);
-BOOL upgrade(BYTE *pcBin, DWORD dwSize);
+BOOL upgrade(const DWORD dwStartAddr, const WORD wPageSize, BYTE *pcBin, DWORD dwSize);
 
 
 #endif // DVCARDUPGRADE_H

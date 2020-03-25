@@ -132,6 +132,7 @@ eMSG_STATE utilHost_StateProcess(sMSG_STATE_DATA *psMsgData, DWORD dwMilliSecond
                     psMsgData->eMsgParsingState = eMSG_STATE_PACKET_HEADER;
                     psMsgData->wRecivedByteCount = 0;
                     psMsgData->wRecivedByteCRC = 0;
+                    //printf("\n\n");
                 }
                 else
                 {
@@ -144,6 +145,8 @@ eMSG_STATE utilHost_StateProcess(sMSG_STATE_DATA *psMsgData, DWORD dwMilliSecond
             {
                 BYTE *pcBuffer = (BYTE *)&psMsgData->sMsgPacket.sPacketHeader;
                 *(pcBuffer + psMsgData->wRecivedByteCount++) = cReadBuffer;
+
+                //printf("0x%02X ", cReadBuffer);
 
                 if(HEADERSIZE == psMsgData->wRecivedByteCount)
                 {

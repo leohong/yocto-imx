@@ -31,7 +31,7 @@ BOOL setIapEnable(DWORD dwStartAddress, DWORD dwBinSize)
 
     if(rcSUCCESS == dvCard_Command_Write(eCMD_MODULE_IAP, eIAP_CMD_APP_INFO, sizeof(sIAP_INFO), (BYTE *)&sInfo)) {
         if(rcSUCCESS == dvCard_Command_Write(eCMD_MODULE_IAP, eIAP_CMD_IAP_ENABLE, 0, &cDummy)) {
-            printf("Iap Eanble Pass\n");
+            printf("Pass\n");
             ret = TRUE;    
         }
     }
@@ -131,14 +131,14 @@ void loadFile(const QString &fileName)
     }
 }
 #endif // 0
-#define PAGE_SIZE (1024)
-BOOL upgrade(BYTE *pcBin, DWORD dwSize)
+
+BOOL upgrade(const DWORD dwStartAddr, const WORD wPageSize, BYTE *pcBin, DWORD dwSize)
 {
     DWORD dwVersion = 0x1234;
     DWORD dwChecksum = 0;
     DWORD dwAddress = 0, i = 0;
 
-    dwAddress = 0x1A008000;
+    dwAddress = dwStartAddr;
 
     // 1. go to bootloader
     printf("1. Go to bootloader\n");
@@ -146,8 +146,9 @@ BOOL upgrade(BYTE *pcBin, DWORD dwSize)
     usleep(2000 * 1000);
 
     // 2. Enable In Application Programming
-    printf("2. Enable Iap\n");
+    printf("2. Enable Iap ");
     if(FALSE == setIapEnable(dwAddress, dwSize)) {
+        printf("Error\n");
         printf("Can't enter programming mode!\n");
         goto ERROR;
     }
@@ -157,12 +158,12 @@ BOOL upgrade(BYTE *pcBin, DWORD dwSize)
     while (dwSize) {
         dwChecksum = 0;
 
-        for (i = 0; i < PAGE_SIZE; i++) {
+        for (i = 0; i < wPageSize; i++) {
             dwChecksum += pcBin[i];
         }
 
         printf("4. Write Addr=0x%X, checksum = 0x%lX\n", dwAddress, dwChecksum);
-        if(FALSE == writePageBinary(PAGE_SIZE, pcBin)) {
+        if(FALSE == writePageBinary(wPageSize, pcBin)) {
             printf("Transfer data Error!\n");
             goto ERROR;
         }
@@ -171,9 +172,14 @@ BOOL upgrade(BYTE *pcBin, DWORD dwSize)
         if(TRUE == checkPageChecksum(dwChecksum)) {
             printf("6. Prog\n");
             programPage(dwAddress);
-            pcBin += 1024;
-            dwSize -= PAGE_SIZE;
-            dwAddress += PAGE_SIZE;
+            if(TRUE == programPage(dwAddress)) {
+                pcBin += wPageSize;
+                dwSize -= wPageSize;
+                dwAddress += wPageSize;
+            } else {
+                printf("Program Error!\n");
+                goto ERROR;
+            }
         } else {
             printf("Checksum Error!\n");
             goto ERROR;
@@ -189,7 +195,10 @@ BOOL upgrade(BYTE *pcBin, DWORD dwSize)
 
     // 5. go to appcode
     printf("8. Go to appCode\n");
-    goToAppCode();
+    if(FALSE == goToAppCode()) {
+        printf("Go to appCode Error!\n");
+        goto ERROR;
+    }
 
     return TRUE;
 

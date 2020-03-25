@@ -42,12 +42,12 @@ int main(int argc, char **argv) {
 		for(count = 0x200; count < dwBufferSz; count++)
 		    dwChecksum += pcBin[count];
 
-        printf("0x8200 to 0x%0lX", (0x8000+dwBufferSz));
-		printf("File size = %ld", dwFileSize);
+        printf("0x8200 to 0x%0ld", (0x8000+dwBufferSz));
+		printf("File size = %ld ", dwFileSize);
 		printf("Mem size = %ld \n", dwBufferSz);
 		printf("checksum = 0x%08lX 0x%08lX\n", dwChecksum, (~dwChecksum+1));
 
-		upgrade(pcBin, dwBufferSz);
+		upgrade(0x1A008000, 1024, pcBin, dwBufferSz);
 		gets(str);
 	}
     free(pcBuffer);
