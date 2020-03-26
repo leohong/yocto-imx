@@ -16,12 +16,14 @@ int main(int argc, char **argv) {
     DWORD dwFileSize = 0, dwBufferSz = 0, count = 0, dwChecksum = 0;
     char *pcBin = NULL, cChar = 0;
     char *pcBuffer = NULL;
-	char *str[100];
+    char str[100];
 
     cardSlotReset();
     cardSlotInit();
 
-	while(1) {
+    utilIntel_Hex_Parser(argv[1]);
+
+    while(1) {
 		printf("Program Start\n");
 		printf("File Name: %s\n", argv[1]);
 
@@ -40,9 +42,9 @@ int main(int argc, char **argv) {
 		fread (pcBin, 1, dwFileSize, fp);
 
 		for(count = 0x200; count < dwBufferSz; count++)
-		    dwChecksum += pcBin[count];
+		dwChecksum += pcBin[count];
 
-        printf("0x8200 to 0x%0ld", (0x8000+dwBufferSz));
+		printf("0x8200 to 0x%0ld", (0x8000+dwBufferSz));
 		printf("File size = %ld ", dwFileSize);
 		printf("Mem size = %ld \n", dwBufferSz);
 		printf("checksum = 0x%08lX 0x%08lX\n", dwChecksum, (~dwChecksum+1));

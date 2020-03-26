@@ -9,6 +9,7 @@
 // --------------------
 // ===============================================================================
 
+#if 0
 #include <stdio.h>
 #include "utilHexToBinAPI.h"
 
@@ -234,8 +235,6 @@ eH2B_STATE utilIntelHexConverter(WORD wNumData, sINTELHEX *psHexData, BYTE *pcIn
     }
 }
 
-#if 1
-
 BOOL utilIntel_Hex_Parser(const char *fileName) {
     int iLine = 0;
     char str[150];
@@ -281,16 +280,25 @@ BOOL utilIntel_Hex_Parser(const char *fileName) {
     return 0;
 }
 
-#else
+#endif //1
 
-static sSegmentList *m_psSegmentListHead;
+#include <stdlib.h>
+#include <stdio.h>
+#include "utilHexToBinAPI.h"
 
 BOOL utilIntel_Hex_Parser(const char *fileName) {
-    int iLine = 0;
-    char str[150];
-    sINTELHEX sIntelHex;
-    DWORD dwAddrOffset = 0;
+    char str[128];
+    char data[128];
+    int length = 0, address = 0, recType = 0;
+    int lastaddr = 0, lastLength = 0, firstLine = TRUE, sectionNum = 0;
+    int addrOffset = 0, sectionEnd = 0, sectorSize = 0, i = 0;
+    int count = 0;
+
+    sHexList sHeader;
+    sHexList *psCurrent = &sHeader;
     FILE* fp = NULL;
+
+    printf("1. Header %x\n", psCurrent);
 
     fp = fopen(fileName, "r");
 
@@ -298,38 +306,192 @@ BOOL utilIntel_Hex_Parser(const char *fileName) {
         return FALSE;
     }
 
-    m_psSegmentListHead = (sSegmentNode*)malloc(sizeof(sSegmentNode));
-
     while(NULL != fgets(str, 150, fp)) {
-	    if(eH2B_STATE_DATA_ERROR != utilIntelHexConverter(150, &sIntelHex, str) {
+		if(4 == sscanf(str, ":%2X%4X%2X%s", &length, &address, &recType, data)) {
 
-			switch(sIntelHex.cRecType) {
-			case 0x00:
-			    break;
+            switch(recType) {
+            case 0x04:
+                if(TRUE != firstLine) {
+                    sectionEnd = addrOffset + lastaddr + lastLength;
+                    printf("1. Section End %X\n", sectionEnd - 1);
+                    printf("1. Section Size %X\n\n", sectorSize);
 
-		    case 0x04:
-            {
-                sSegmentNode *psNewNode = NULL;
+                    // TODO: Malloc a character array with the sectorSize
+                    psCurrent->size = sectorSize;
+                    psCurrent->pcBuffer = malloc(sizeof(char)*sectorSize);
 
-                psNewNode = (sSegmentNode*)malloc(sizeof(sSegmentNode))
-		        dwAddrOffset = (sIntelHex.acData[0] << 8) | sIntelHex.acData[1];;
-		        printf("%X, %X ", sIntelHex.acData[0], sIntelHex.acData[1]); 
-		        printf("wAddrOffset = %04lX\n", dwAddrOffset);
+                    printf("3. nb %d, %x\n", sectionNum, &psCurrent->pcBuffer);
+                }
+                sscanf(data, "%4X", &addrOffset);
+                addrOffset *= 0x10000;
+				firstLine = TRUE;
+                break;
 
-                psNewNode->dwAddress = dwAddrOffset * 0x1000;
-                m_psSegmentListHead->next = ;
+            case 0x00:
+                if(TRUE == firstLine) {
+                    printf("%X %X\n", sectionEnd, (addrOffset + address - 1));
+                    if(sectionEnd != (addrOffset + address)) {
+                        printf("Section %d 0x%X\n", sectionNum, addrOffset + address);
+                        sectionNum++;
+                        sectorSize = 0;
+
+                        // TODO: Create a new list node, fill the start address
+                        {
+                            sHexList *psNewNode;
+                            psNewNode = malloc(sizeof(sHexList));
+                            psNewNode->next = NULL;
+                            psNewNode->address = addrOffset + address;
+                            psCurrent->next = psNewNode;
+                            psCurrent = psNewNode;
+                            printf("2. n %d, %x\n", sectionNum, psCurrent);
+                        }
+                    }
+                    firstLine = FALSE;
+                } 
+                lastaddr = address;
+                lastLength = length;
+                sectorSize += length;
+                break;
+
+            case 0x01:
+                printf("End of File\n");
+                break;
+
+            case 0x02:
+                printf("Extended Segment Address 0x%s\n", data);
+                break;
+
+            case 0x03:
+                printf("Start Segment Address 0x%s\n", data);
+                break;
+
+            case 0x05:
+                sectionEnd = addrOffset + lastaddr + lastLength;
+                // TODO: int *arr1 = realloc(size, sizeof(int));
+                {
+                    char *pcBuffer2 = realloc(psCurrent->pcBuffer, sectorSize);
+                    psCurrent->size = sectorSize;
+                    psCurrent->pcBuffer = pcBuffer2;
+                    printf("3. nb %d, %x\n", sectionNum, &psCurrent->pcBuffer);
+                }
+                printf("2. Section End %X\n", sectionEnd - 1);
+                printf("2. Section Size %X\n\n", sectorSize);
+                printf("Start Linear Address 0x%s\n", data);
+                break;
+
+            default:
+                break;
             }
-		    break;
 
-			default:
-			    break;
-		    }
-		}
+        } else {
+            printf("Invalid hex file\n");
+            goto ERROR;
+        }
 	}
 
+    rewind(fp);
+
+    length = address = recType = 0;
+    lastaddr = lastLength = sectionNum = 0;
+    addrOffset = sectionEnd = sectorSize = i = 0;
+    firstLine = TRUE;
+    psCurrent = &sHeader;
+
+    while(NULL != fgets(str, 150, fp)) {
+		if(4 == sscanf(str, ":%2X%4X%2X%s", &length, &address, &recType, data)) {
+            switch(recType) {
+            case 0x04:
+                if(TRUE != firstLine) {
+                    sectionEnd = addrOffset + lastaddr + lastLength;
+                    printf("1. Section End %X\n", sectionEnd - 1);
+                    printf("1. Section Size %X\n", sectorSize);
+                }
+                sscanf(data, "%4X", &addrOffset);
+                addrOffset *= 0x10000;
+				firstLine = TRUE;
+                break;
+
+            case 0x00:
+                if(TRUE == firstLine) {
+                    printf("%X %X\n", sectionEnd, (addrOffset + address - 1));
+                    if(sectionEnd != (addrOffset + address)) {
+                        printf("Write Count %X\n\n", count*16);
+                        count = 0;
+                        printf("Section %d 0x%X\n", sectionNum, addrOffset + address);
+                        sectionNum++;
+                        sectorSize = 0;
+
+                        psCurrent = psCurrent->next;
+                        printf("Addr %X, Size %X\n", psCurrent->address, psCurrent->size);
+                    }
+                    firstLine = FALSE;
+                } 
+                lastaddr = address;
+                lastLength = length;
+                sectorSize += length;
+                count++;
+
+				// TODO: Copy data to buffer
+                for(i = 0; i < length; i++) {
+                    int tmp = 0;
+                    if(1 == sscanf(&data[i*2], "%2X", &tmp)) {
+                        //printf("%X", tmp);
+                        psCurrent->pcBuffer[i] = tmp;
+                    }
+                }
+                //printf("\n");
+                break;
+
+            case 0x01:
+                printf("End of File\n");
+                break;
+
+            case 0x02:
+                printf("Extended Segment Address 0x%s\n", data);
+
+                break;
+
+            case 0x03:
+                printf("Start Segment Address 0x%s\n", data);
+                break;
+
+            case 0x05:
+                sectionEnd = addrOffset + lastaddr + lastLength;
+                printf("2. Section End %X\n", sectionEnd - 1);
+                printf("2. Section Size %X\n\n", sectorSize);
+                printf("Write Count %X\n\n", count*16);
+                printf("Start Linear Address 0x%s\n", data);
+                break;
+
+            default:
+                break;
+			}
+        } else {
+            printf("Invalid hex file\n");
+            goto ERROR;
+        }
+	}
+
+	// Free lsit
+    while(NULL != sHeader.next) {
+        sHexList *psCurrent = sHeader.next;
+
+        printf("%X\n", psCurrent);
+
+        sHeader.next = psCurrent->next;
+
+        printf("4. %X\n", psCurrent->address);
+        printf("5. %X\n", psCurrent->size);
+        printf("6. %X\n", psCurrent->pcBuffer);
+        free(psCurrent->pcBuffer);
+        printf("7. %X\n", psCurrent);
+        free(psCurrent);
+    }
+
+ERROR:
     fclose(fp);
 
     return 0;
 }
-#endif //1
+
 

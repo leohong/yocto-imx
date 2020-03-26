@@ -14,6 +14,7 @@
 
 #include "Driver/Bus/types.h"
 
+#if 0
 /*
 struct segmentNode {
     DWORD       dwAddress;
@@ -31,7 +32,7 @@ typedef struct
     BYTE 	cLength;
     DWORD 	dwAddress;
     BYTE 	cRecType;
-    BYTE 	acData[33];
+    BYTE 	acData[128];
 } sINTELHEX;
 
 typedef enum
@@ -44,6 +45,16 @@ typedef enum
 } eH2B_STATE;
 
 eH2B_STATE utilIntelHexConverter(WORD wNumData, sINTELHEX *psHexData, BYTE *pcInPut);
+#endif // 0
+
+struct node {
+    int address;
+    int size;
+    struct node *next;
+    char *pcBuffer;
+};
+
+typedef struct node sHexList;
 BOOL utilIntel_Hex_Parser(const char *fileName);
 
 #endif /* UTILHEXTOBINAPI_H.h */
