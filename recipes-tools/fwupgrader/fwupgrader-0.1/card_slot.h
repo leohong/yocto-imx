@@ -18,21 +18,21 @@ enum {
 
 void cardSlotReset();
 int cardSlotInit();
-//SWITCHRESULT cardSlotSetInput(UBYTE);
-//UBYTE cardSlotCurrentInput();
-//void cardSlotSetParams(UBYTE);
+// SWITCHRESULT cardSlotSetInput(UBYTE);
+// UBYTE cardSlotCurrentInput();
+// void cardSlotSetParams(UBYTE);
 
-//MODEINFO* cardSlotModeInfoSlot1();
-//MODEINFO* cardSlotModeInfoSlot2();
-//MODEINFO* cardSlotModeInfoSlot3();
-//MODEINFO* cardSlotModeInfoSlot4();
-//MODEINFO* cardSlotModeInfoSlotOps();
+// MODEINFO* cardSlotModeInfoSlot1();
+// MODEINFO* cardSlotModeInfoSlot2();
+// MODEINFO* cardSlotModeInfoSlot3();
+// MODEINFO* cardSlotModeInfoSlot4();
+// MODEINFO* cardSlotModeInfoSlotOps();
 
-//void cardSlotInitModeInfo();
-//void cardSlotIFM();
+// void cardSlotInitModeInfo();
+// void cardSlotIFM();
 
-//BOOL cardSlotGimAvailable();
-//BOOL cardSlotOpsAvailable();
-//BOOL cardSlotGetNumberOfInputs();
+// BOOL cardSlotGimAvailable();
+// BOOL cardSlotOpsAvailable();
+// BOOL cardSlotGetNumberOfInputs();
 
-#endif // GIM_SLOT_H
+#endif  // GIM_SLOT_H

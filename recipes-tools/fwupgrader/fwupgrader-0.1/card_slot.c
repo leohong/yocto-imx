@@ -1,7 +1,7 @@
 
-#include <stdio.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -25,26 +25,30 @@
 //#include "Driver/FPGA/CVI_HDMI.h"
 //#include "Driver/FPGA/CVI.h"
 //#include "globals.h"
-#include "dvCard.h"
 #include "card_slot.h"
+#include "dvCard.h"
 //#include "Services/SPD.h"
 
-#define CARDSLOT_DBG_LEVEL 0  // 0: Always, 1,2: Error, 3,4: Warning, 5,6: Info, 7,8,9: Debugging
+#define CARDSLOT_DBG_LEVEL \
+    0  // 0: Always, 1,2: Error, 3,4: Warning, 5,6: Info, 7,8,9: Debugging
 #define CARDSLOT_DBG_PREFIX "card_slot.c > "
-#define CARDSLOT_DBG_MSG(level, cmd) if(level <= CARDSLOT_DBG_LEVEL){ cmd; }
+#define CARDSLOT_DBG_MSG(level, cmd)   \
+    if (level <= CARDSLOT_DBG_LEVEL) { \
+        cmd;                           \
+    }
 
-#define CARD_IFM_VALID_DELAY   2
+#define CARD_IFM_VALID_DELAY 2
 #define CARD_IFM_INVALID_DELAY 2
 
 #define RETRY_COUNT (10)
 
 static UBYTE currentInput = 0xFF;
-//static AUDIOMODEINFO audioModeInfo;
+// static AUDIOMODEINFO audioModeInfo;
 static sSLOT_INFO m_sSlotInfo;
 static BOOL gimPresent = FALSE;
 static BOOL opsPresent = FALSE;
 static BYTE powerMode = 0x00;
-//static MODEINFO modeInfo[CARDSLOT_NUMINPUTS];
+// static MODEINFO modeInfo[CARDSLOT_NUMINPUTS];
 
 static UBYTE ifmValidDelayCnt[CARDSLOT_NUMINPUTS];
 static UBYTE ifmInvalidDelayCnt[CARDSLOT_NUMINPUTS];
@@ -89,16 +93,16 @@ d. Decide which slot has to Power On by Input Card Variable:
 =============================================================*/
 int cardSlotInit()
 {
-    BOOL    ok;
-    WORD    cards_present;
-    BYTE    ready = 0;
-    //SWORD16 selectedCard = INPUT_CARD_SLOT;
-    BYTE    cCount = 0;
+    BOOL ok;
+    WORD cards_present;
+    BYTE ready = 0;
+    // SWORD16 selectedCard = INPUT_CARD_SLOT;
+    BYTE cCount = 0;
 
-//    SPDGetCacheParS16(INPUT_CARD_VAR, &selectedCard);
+    // SPDGetCacheParS16(INPUT_CARD_VAR, &selectedCard);
 
     cardSlotReset();
-    //cardSlotInitModeInfo();
+    // cardSlotInitModeInfo();
     memset(&m_sSlotInfo, 0x00, sizeof(m_sSlotInfo));
 
     dvCard_Initial();
@@ -121,7 +125,7 @@ int cardSlotInit()
         cCount++;
     }
     while((0 == ready) && (cCount < RETRY_COUNT));
-#endif // 0
+#endif  // 0
 
 #if 0
     if(TRUE == ready)
@@ -221,8 +225,8 @@ int cardSlotInit()
     }
 
     currentInput = 3;
-#endif // 0
-    return 1;//OK;
+#endif         // 0
+    return 1;  // OK;
 }
 
 #if 0
@@ -484,4 +488,4 @@ void cardSlotIFM()
         }
     }
 }
-#endif // 0
+#endif  // 0

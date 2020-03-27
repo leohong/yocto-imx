@@ -14,21 +14,19 @@
 #include "Driver/Bus/types.h"
 //#include "Driver/Output/Audio.h"
 
-#define AUDIO_CHANNEL_STATUS_NUMBERS    (5)
-#define INPUT_PORT_NUMBERS              (4)
+#define AUDIO_CHANNEL_STATUS_NUMBERS (5)
+#define INPUT_PORT_NUMBERS (4)
 
 #pragma pack(push)
 #pragma pack(1)
 
-typedef struct
-{
-    UBYTE    cModule;
-    UBYTE    cSubCmd;
-    UBYTE    acData[1024 + 32];
+typedef struct {
+    UBYTE cModule;
+    UBYTE cSubCmd;
+    UBYTE acData[1024 + 32];
 } sPAYLOAD;
 
-typedef enum
-{
+typedef enum {
     eACK_TYPE_NONACK,
     eACK_TYPE_ACK,
     eACK_TYPE_BADPACKET,
@@ -51,10 +49,9 @@ typedef enum
 */
 
 // Cmd table §Î¦¡
-typedef struct
-{
+typedef struct {
     WORD wCmdIndex;
-    eRESULT(*pFunc)(sPAYLOAD *, sPAYLOAD *, WORD *);
+    eRESULT (*pFunc)(sPAYLOAD *, sPAYLOAD *, WORD *);
 } sCMDCFG;
 
 #if 0
@@ -247,51 +244,47 @@ typedef struct
     //BOOL           bForceSPDIF;           // Force output to use SPDIF as source
 
 } sAUDIO_INFO;
-#endif //0
+#endif  // 0
 
-typedef struct
-{
+typedef struct {
     BYTE cVideoInfoChange;
     BYTE cAudioInfoChange;
     BYTE cPortStatusChange;
 
 } sSYSTEM_STATUS;
 
-#define MAX_MSG_PKT     (8)
-#define MSG_RETRY       (5)
+#define MAX_MSG_PKT (8)
+#define MSG_RETRY (5)
 // #define MAX_PACKET_SIZE (1024+16)
-#define MAX_PACKET_SIZE (sizeof(sPAYLOAD)/sizeof(BYTE))
-    
-#define HEADERSIZE      (sizeof(sMSG_PACKET_HEADER)/sizeof(BYTE))
+#define MAX_PACKET_SIZE (sizeof(sPAYLOAD) / sizeof(BYTE))
+
+#define HEADERSIZE (sizeof(sMSG_PACKET_HEADER) / sizeof(BYTE))
 #define MAGICNUMBERSIZE (2)
-#define MAGICNUMBER1    (0x55)
-#define MAGICNUMBER2    (0x55)
+#define MAGICNUMBER1 (0x55)
+#define MAGICNUMBER2 (0x55)
 
-#define HEAD_PACK_SIZE  (MAGICNUMBERSIZE + HEADERSIZE)
+#define HEAD_PACK_SIZE (MAGICNUMBERSIZE + HEADERSIZE)
 
-typedef enum
-{
+typedef enum {
     eMSG_TYPE_UART,
-	eMSG_TYPE_FOTA,
+    eMSG_TYPE_FOTA,
 
     eMSG_TYPE_NUMBERS,
 } eMSG_TYPE;
 
-typedef enum
-{
+typedef enum {
     eDEVICE_APP = 0,
     eDEVICE_BOOTCODE,
-    eDEVICE_FOTA,       // RK3399
+    eDEVICE_FOTA,  // RK3399
     eDEVICE_HOST_NUMBERS,
-    
+
     eDEVICE_DOCKING_BOARD = 0,
     eDEVICE_GIM,
 
     eDEVICE_SLOT_NUMBERS,
 } eDEVICE;
 
-typedef enum
-{
+typedef enum {
     ePAYLOAD_TYPE_EXE_WRITE,
     ePAYLOAD_TYPE_EXE_READ,
     ePAYLOAD_TYPE_REPLY,
@@ -300,8 +293,7 @@ typedef enum
     ePAYLOAD_TYPE_NUMBERS,
 } ePAYLOAD_TYPE;
 
-typedef enum
-{
+typedef enum {
     eMSG_STATE_MAGIC_NUMBER,
     eMSG_STATE_PACKET_HEADER,
     eMSG_STATE_PACKET_PAYLOAD,
@@ -314,57 +306,45 @@ typedef enum
     eMSG_STATE_NUMBERS,
 } eMSG_STATE;
 
-typedef struct
-{
-    UBYTE    cSource;
-    UBYTE    cDestination;
-    UBYTE    cPacketType;
-    WORD    wSeqId;
-    WORD    wPacketSize;
-    WORD    wChecksum;
+typedef struct {
+    UBYTE cSource;
+    UBYTE cDestination;
+    UBYTE cPacketType;
+    WORD wSeqId;
+    WORD wPacketSize;
+    WORD wChecksum;
 } sMSG_PACKET_HEADER;
 
-typedef struct
-{
-    UBYTE                cMagicNumber1;
-    UBYTE                cMagicNumber2;
-    sMSG_PACKET_HEADER  sPacketHeader;
+typedef struct {
+    UBYTE cMagicNumber1;
+    UBYTE cMagicNumber2;
+    sMSG_PACKET_HEADER sPacketHeader;
 
-    union
-    {
-        sPAYLOAD        sPayLoad;
-        UBYTE            acPacketPayload[sizeof(sPAYLOAD)];
-    }uFormat;
+    union {
+        sPAYLOAD sPayLoad;
+        UBYTE acPacketPayload[sizeof(sPAYLOAD)];
+    } uFormat;
 
 } sMSG_PACKET_FORMAT;
 
 typedef eRESULT (*fpWRITE)(WORD wSize, UBYTE *pcData);
 typedef eRESULT (*fpREAD)(WORD wSize, UBYTE *pcData);
 
-typedef struct
-{
-    sMSG_PACKET_FORMAT  sMsgPacket;
-    eMSG_STATE          eMsgParsingState;
-    WORD                wRecivedByteCount;
-    WORD                wRecivedByteCRC;
-    fpWRITE             fpWriteFunc;
-    fpREAD              fpReadFunc;
+typedef struct {
+    sMSG_PACKET_FORMAT sMsgPacket;
+    eMSG_STATE eMsgParsingState;
+    WORD wRecivedByteCount;
+    WORD wRecivedByteCRC;
+    fpWRITE fpWriteFunc;
+    fpREAD fpReadFunc;
 
 } sMSG_STATE_DATA;
 
-#pragma pack(pop)   /* restore original alignment from stack */
+#pragma pack(pop) /* restore original alignment from stack */
 
 void utilHost_Init(void);
 void utilHost_Process(void);
-void utilHost_PacketBuild(sMSG_PACKET_FORMAT *psPacket,
-                          eDEVICE eSource,
-                          eDEVICE eDestination,
-                          ePAYLOAD_TYPE ePayloadType,
-                          WORD wSeqId,
-                          WORD wDataSize,
-                          sPAYLOAD *psPayload);
-eMSG_STATE utilHost_StateProcess(sMSG_STATE_DATA *psMsgData, DWORD dwMilliSecond);
+void utilHost_PacketBuild(sMSG_PACKET_FORMAT *psPacket, eDEVICE eSource, eDEVICE eDestination, ePAYLOAD_TYPE ePayloadType, WORD wSeqId, WORD wDataSize, sPAYLOAD *psPayload);
+eMSG_STATE utilHost_StateProcess(sMSG_STATE_DATA *psMsgData, D_WORD dwMilliSecond);
 
-#endif //UTILHOSTPROCAPI_H
-
-
+#endif  // UTILHOSTPROCAPI_H

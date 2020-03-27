@@ -17,23 +17,21 @@
 
 #include "utilHostAPI.h"
 
-#define OPS_MASK        (0x01 << 0)
-#define CARD_MASK       (0x01 << 1)
-#define ALL_SLOT_MASK   (OPS_MASK | CARD_MASK)
+#define OPS_MASK (0x01 << 0)
+#define CARD_MASK (0x01 << 1)
+#define ALL_SLOT_MASK (OPS_MASK | CARD_MASK)
 
-#pragma pack(push)  /* push current alignment to stack */
-#pragma pack(1)     /* set alignment to 1 byte boundary */
+#pragma pack(push) /* push current alignment to stack */
+#pragma pack(1)    /* set alignment to 1 byte boundary */
 
-typedef struct
-{
+typedef struct {
     BYTE cInputs;
     BYTE acInputName[32];
 } sSLOT_INFO;
 
-#pragma pack(pop)   /* restore original alignment from stack */
+#pragma pack(pop) /* restore original alignment from stack */
 
-typedef enum
-{
+typedef enum {
     eCMD_MODULE_SYSTEM,
     eCMD_MODULE_SOURCE_SWITCH,
     eCMD_MODULE_SOURCE_VIDEO,
@@ -44,9 +42,8 @@ typedef enum
     eCMD_MODULE_NUMBER,
 } eCMD_MODULE;
 
-//sub Cmd for eCMD_MODULE_SYSTEM
-typedef enum
-{
+// sub Cmd for eCMD_MODULE_SYSTEM
+typedef enum {
     eCMD_SYSTEM_READY,
     eCMD_SYSTEM_VERSION,
     eCMD_SYSTEM_STATUS,
@@ -61,9 +58,8 @@ typedef enum
     eCMD_SYSTEM_NUMBER,
 } eCMD_SYSTEM;
 
-//sub Cmd for eCMD_MODULE_SOURCE_SWITCH
-typedef enum
-{
+// sub Cmd for eCMD_MODULE_SOURCE_SWITCH
+typedef enum {
     eCMD_SOURCE_PORT_SWITCH,
     eCMD_SOURCE_HDMI_DHCP,
     eCMD_SOURCE_DP_HDCP,
@@ -74,9 +70,8 @@ typedef enum
 } eCMD_SOURCE_SWITCH;
 
 
-//sub Cmd for eCMD_MODULE_SOURCE_VIDEO
-typedef enum
-{
+// sub Cmd for eCMD_MODULE_SOURCE_VIDEO
+typedef enum {
     eCMD_SOURCE_VIDEO_TIMING,
     eCMD_SOURCE_VIDEO_INTERLACE,
     eCMD_SOURCE_VIDEO_COLOR_DEPTH,
@@ -88,9 +83,8 @@ typedef enum
     eCMD_SOURCE_VIDEO_NUMBER,
 } eCMD_SOURCE_VIDEO;
 
-//sub Cmd for eCMD_MODULE_SOURCE_AUDIO
-typedef enum
-{
+// sub Cmd for eCMD_MODULE_SOURCE_AUDIO
+typedef enum {
     eCMD_SOURCE_AUDIO_INFO,
     eCMD_SOURCE_AUDIO_CHANNEL_COUNT,
     eCMD_SOURCE_AUDIO_SAMPLING_SIZE,
@@ -99,9 +93,8 @@ typedef enum
     eCMD_SOURCE_AUDIO_NUMBER,
 } eCMD_SOURCE_AUDIO;
 
-//sub Cmd for eCMD_MODULE_SOURCE_EDID
-typedef enum
-{
+// sub Cmd for eCMD_MODULE_SOURCE_EDID
+typedef enum {
     eCMD_EDID_HDMI_RESOLUTION,
     eCMD_EDID_DP_RESOLUTION,
     eCMD_EDID_HDMI_FRAME_RATE,
@@ -121,43 +114,40 @@ typedef enum
     eCMD_EDID_NUMBER,
 } eCMD_EDID;
 
-//sub Cmd for eCMD_MODULE_SOURCE_SDI
-typedef enum
-{
+// sub Cmd for eCMD_MODULE_SOURCE_SDI
+typedef enum {
     eCMD_SDI_AUDIO_MAP,
     eCMD_SDI_LEVEL_STREAM,
 
     eCMD_SDI_NUMBER,
 } eCMD_SDI;
 
-//sub Cmd for eCMD_MODULE_IAP
-typedef enum
-{
+// sub Cmd for eCMD_MODULE_IAP
+typedef enum {
     // Common Command
-    /* 00 */eIAP_CMD_IDLE               = 0,    // Check Busy
-    /* 01 */eIAP_CMD_VERSION            = 1,
-    /* 02 */eIAP_CMD_GO_TO_BOOTLOADER   = 2,
+    /* 00 */ eIAP_CMD_IDLE = 0,  // Check Busy
+    /* 01 */ eIAP_CMD_VERSION = 1,
+    /* 02 */ eIAP_CMD_GO_TO_BOOTLOADER = 2,
 
-    /* 03 */eIAP_CMD_BL_VER             = 3,    // Bootloader Version
-    /* 04 */eIAP_CMD_APP_VER,                   // App Code Version
-    /* 05 */eIAP_CMD_RUN_APP,                   // Run App Code
-    /* 06 */eIAP_CMD_IAP_ENABLE,                // Enable IAP Process
-    /* 07 */eIAP_CMD_APP_INFO,                  // Start Address and Size of Bin File
-    /* 08 */eIAP_CMD_BIN_ADDRESS,               // Address of 1K buffer of Bin File
-    /* 09 */eIAP_CMD_BIN_DATA,                  // Send Bin Data
-    /* 10 */eIAP_CMD_PROGRAMING_FINISH,         // Programming Finish
-    /* 11 */eIAP_CMD_BIN_CHECK_SUM,             // Bin File Check Sum
-    /* 12 */eIAP_CMD_PROGRAMING,                // Program Bin Data to Flash
-    /* 13 */eIAP_CMD_APP_CODE_READBACK,         // Read App code
-    /* 14 */eIAP_CMD_LOG,                       // Enable debug log
+    /* 03 */ eIAP_CMD_BL_VER = 3,         // Bootloader Version
+    /* 04 */ eIAP_CMD_APP_VER,            // App Code Version
+    /* 05 */ eIAP_CMD_RUN_APP,            // Run App Code
+    /* 06 */ eIAP_CMD_IAP_ENABLE,         // Enable IAP Process
+    /* 07 */ eIAP_CMD_APP_INFO,           // Start Address and Size of Bin File
+    /* 08 */ eIAP_CMD_BIN_ADDRESS,        // Address of 1K buffer of Bin File
+    /* 09 */ eIAP_CMD_BIN_DATA,           // Send Bin Data
+    /* 10 */ eIAP_CMD_PROGRAMING_FINISH,  // Programming Finish
+    /* 11 */ eIAP_CMD_BIN_CHECK_SUM,      // Bin File Check Sum
+    /* 12 */ eIAP_CMD_PROGRAMING,         // Program Bin Data to Flash
+    /* 13 */ eIAP_CMD_APP_CODE_READBACK,  // Read App code
+    /* 14 */ eIAP_CMD_LOG,                // Enable debug log
 
     eIAP_CMD_NUMBERS,
 } eCMD_IAP;
 
-//Status
+// Status
 
-typedef enum
-{
+typedef enum {
     eSOURCE_LIST_OPS_HDMI,
     eSOURCE_LIST_OPS_DP,
     eSOURCE_LIST_SLOT_0,
@@ -168,8 +158,7 @@ typedef enum
     eSOURCE_LIST_NUMBERS,
 } eSOURCE_LIST;
 
-typedef enum
-{
+typedef enum {
     eSDI_AUDIO_MAP_CHANNEL1_2,
     eSDI_AUDIO_MAP_CHANNEL3_4,
     eSDI_AUDIO_MAP_CHANNEL5_6,
@@ -178,15 +167,13 @@ typedef enum
     eSDI_AUDIO_MAP_CHANNEL_NUMBER,
 } eSDI_AUDIO_MAP_STATUS;
 
-typedef enum
-{
+typedef enum {
     eINPUT_CARD_ID_GIM_STANDARD,
     //...TBD
     eMAX_INPUT_CARD_ID,
 } eINPUT_CARD_ID;
 
-typedef enum
-{
+typedef enum {
     eINPUT_HARDWARE_VERSION_R1,
     //...TBD
     eMAX_INPUT_HARDWARE_VERSION,
@@ -195,25 +182,30 @@ typedef enum
 void dvCard_Initial(void);
 BOOL dvCard_System_Revision_Get(BYTE *pcVersion);
 BOOL dvCard_System_Ready_Get(BYTE *pcReady);
-//BOOL dvCard_System_Card_Present_Get(WORD* pwPresent);
-//BOOL dvCard_System_Card_Power_Set(WORD wEnable);
-//BOOL dvCard_System_Card_Power_Get(WORD* pwEnable);
-//BOOL dvCard_Input_Port_Set(eSOURCE_LIST ePort);
+// BOOL dvCard_System_Card_Present_Get(WORD* pwPresent);
+// BOOL dvCard_System_Card_Power_Set(WORD wEnable);
+// BOOL dvCard_System_Card_Power_Get(WORD* pwEnable);
+// BOOL dvCard_Input_Port_Set(eSOURCE_LIST ePort);
 
-//BOOL dvCard_Audio_Info_Get(AUDIOMODEINFO* audioInfo);
+// BOOL dvCard_Audio_Info_Get(AUDIOMODEINFO* audioInfo);
 
-//BOOL dvCard_Get_Video_Mode(MODEINFO* modeinfo);
+// BOOL dvCard_Get_Video_Mode(MODEINFO* modeinfo);
 
-//BOOL dvCard_Slot_Info_Get(sSLOT_INFO *psSlotInfo);
+// BOOL dvCard_Slot_Info_Get(sSLOT_INFO *psSlotInfo);
 BOOL dvCard_Slot_Ready_Get(BYTE *pcReady);
 
-//BOOL dvCard_Input_Hdcp_Enable(BYTE input, BYTE enable);
-//BOOL dvCard_Input_Has_Signal(BYTE input, BOOL* hasSignal);
-//BOOL dvCard_Video_Info_Get(BYTE input, MODEINFO* modeInfo);
+// BOOL dvCard_Input_Hdcp_Enable(BYTE input, BYTE enable);
+// BOOL dvCard_Input_Has_Signal(BYTE input, BOOL* hasSignal);
+// BOOL dvCard_Video_Info_Get(BYTE input, MODEINFO* modeInfo);
 
 // TODO: Audio info!
-eRESULT dvCard_Command_Write(eCMD_MODULE eModule, BYTE cSubCmd, WORD wSize, BYTE *pcData);
-eRESULT dvCard_Command_Read(eCMD_MODULE eModule, BYTE cSubCmd, WORD wSize, BYTE *pcData);
+eRESULT dvCard_Command_Write(eCMD_MODULE eModule,
+                             BYTE cSubCmd,
+                             WORD wSize,
+                             BYTE *pcData);
+eRESULT dvCard_Command_Read(eCMD_MODULE eModule,
+                            BYTE cSubCmd,
+                            WORD wSize,
+                            BYTE *pcData);
 
-#endif // DVCARD_H
-
+#endif  // DVCARD_H

@@ -1,61 +1,54 @@
-#include <stdlib.h>
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/select.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <string.h>
-#include <errno.h>
 
 #define MAXBYTES 80
 
 #include "dvCardUpgrade.h"
+#include "utilHexToBinAPI.h"
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     FILE *fp = NULL;
-    DWORD dwFileSize = 0, dwBufferSz = 0, count = 0, dwChecksum = 0;
-    char *pcBin = NULL, cChar = 0;
-    char *pcBuffer = NULL;
-    char str[100];
+    sHexList sHeader;
+    sHexList sAppCode;
+    sMEM_TAG_PARAM *psTag = NULL;
 
     cardSlotReset();
     cardSlotInit();
 
-    utilIntel_Hex_Parser(argv[1]);
+    printf("Program Start\n");
+    printf("File Name: %s\n", argv[1]);
+    utilIntel_Hex_Parser(argv[1], &sHeader, 1024);
 
-    while(1) {
-		printf("Program Start\n");
-		printf("File Name: %s\n", argv[1]);
+    if (TRUE == utilIntel_Hex_List_Find(&sHeader, 0x1A008000, &sAppCode)) {
+        printf("Address = %X\n", sAppCode.address);
+        printf("Size = %x\n", sAppCode.size);
 
-		fp = fopen(argv[1], "r");
-		fseek(fp, 0, SEEK_END);
-		dwFileSize = ftell(fp) - 0x8000;
-		rewind(fp);
+		psTag = (sMEM_TAG_PARAM *)sAppCode.pcBuffer;
 
-		dwBufferSz = ((dwFileSize / 1024) + 1)*1024;
+		printf("Version %x\n", psTag->dwCodeVersion);
+		printf("Startup %x\n", psTag->dwCodeStartupAddress);
+		printf("CodeSize %x\n", psTag->dwCodeSize);
+		printf("Checksum %x\n", psTag->dwCodeChecksum);
 
-		pcBuffer = (char*)malloc(dwBufferSz);
-		memset(pcBuffer, 0xFF, dwBufferSz);
+    } else {
+        printf("Not Found!\n");
+    }
 
-		pcBin = pcBuffer;
-		fseek(fp, 0x8000, SEEK_SET);
-		fread (pcBin, 1, dwFileSize, fp);
+    if (TRUE == utilIntel_Hex_List_Find(&sHeader, 0x1A008200, &sAppCode)) {
+        printf("Address = %X\n", sAppCode.address);
+        printf("Size = %x\n", sAppCode.size);
 
-		for(count = 0x200; count < dwBufferSz; count++)
-		dwChecksum += pcBin[count];
-
-		printf("0x8200 to 0x%0ld", (0x8000+dwBufferSz));
-		printf("File size = %ld ", dwFileSize);
-		printf("Mem size = %ld \n", dwBufferSz);
-		printf("checksum = 0x%08lX 0x%08lX\n", dwChecksum, (~dwChecksum+1));
-
-		upgrade(0x1A008000, 1024, pcBin, dwBufferSz);
-		gets(str);
-	}
-    free(pcBuffer);
-    fclose(fp);
+        upgrade(0x1A008200, 1024, sAppCode.pcBuffer, sAppCode.size);
+    } else {
+        printf("Not Found!\n");
+    }
 
     return 0;
 }
-
-

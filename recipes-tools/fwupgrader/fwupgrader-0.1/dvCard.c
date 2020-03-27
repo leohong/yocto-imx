@@ -14,25 +14,29 @@
 #include "string.h"
 #include "unistd.h"
 
-#include "Driver/Bus/types.h"
 #include "Driver/Bus/SPI.h"
+#include "Driver/Bus/types.h"
 
 #include "dvCard.h"
 
-#define TIME_OUT        (10)
-#define RETRY_DELAY     (10)
-#define SLEEP_BTWN_RW   (2)
-#define RETRY_COUNT     (1)
+#define TIME_OUT (10)
+#define RETRY_DELAY (10)
+#define SLEEP_BTWN_RW (2)
+#define RETRY_COUNT (1)
 
-#define DVCARD_DBG_LEVEL 7  // 0: Always, 1,2: Error, 3,4: Warning, 5,6: Info, 7,8,9: Debugging
+#define DVCARD_DBG_LEVEL \
+    7  // 0: Always, 1,2: Error, 3,4: Warning, 5,6: Info, 7,8,9: Debugging
 #define DVCARD_DBG_PREFIX "dvCard.c > "
-#define DVCARD_DBG_MSG(level, cmd) if(level <= DVCARD_DBG_LEVEL){ cmd; }
+#define DVCARD_DBG_MSG(level, cmd)   \
+    if (level <= DVCARD_DBG_LEVEL) { \
+        cmd;                         \
+    }
 
 static WORD m_wSeqId = 0;
-//StaticSemaphore_t m_axCardSemaphoreBuffer;
-//SemaphoreHandle_t m_xCardSemaphore;
+// StaticSemaphore_t m_axCardSemaphoreBuffer;
+// SemaphoreHandle_t m_xCardSemaphore;
 
-static sMSG_STATE_DATA  m_sCardState;
+static sMSG_STATE_DATA m_sCardState;
 
 // ==============================================================================
 // FUNCTION NAME: dvCard_Device_Read
@@ -54,12 +58,11 @@ static sMSG_STATE_DATA  m_sCardState;
 static eRESULT dvCard_Device_Write(WORD wSize, BYTE *pcData)
 {
 #if 1
-    UBYTE* readBuffer = malloc(wSize);
+    UBYTE *readBuffer = malloc(wSize);
     BOOL ok = SPITransferBuffer(pcData, readBuffer, wSize);
     int i = 0;
     DVCARD_DBG_MSG(9, printf(DVCARD_DBG_PREFIX "Writing %d bytes to SPI %s:", wSize, ok ? "ok" : "failed"));
-    for (i=0; i<wSize; i++)
-    {
+    for (i = 0; i < wSize; i++) {
         DVCARD_DBG_MSG(9, printf("0x%x ", *(pcData + i)));
     }
     DVCARD_DBG_MSG(9, printf("\n\n\n\n\n"));
@@ -67,7 +70,7 @@ static eRESULT dvCard_Device_Write(WORD wSize, BYTE *pcData)
     return ok ? rcSUCCESS : rcERROR;
 #else
     return rcSUCCESS;
-#endif // 0
+#endif  // 0
 }
 
 // ==============================================================================
@@ -91,18 +94,17 @@ static eRESULT dvCard_Device_Read(WORD wSize, BYTE *pcData)
 {
 #if 1
     static int count = 0;
-    UBYTE* writeBuffer = calloc(wSize, 1);
+    UBYTE *writeBuffer = calloc(wSize, 1);
     BOOL ok = SPITransferBuffer(writeBuffer, pcData, wSize);
     int i = 0;
-    //   DVCARD_DBG_MSG(9, printf(DVCARD_DBG_PREFIX "Reading %d bytes from SPI %s:", wSize, ok ? "ok" : "failed"));
-    for (i=0; i<wSize; i++)
-    {
+    //   DVCARD_DBG_MSG(9, printf(DVCARD_DBG_PREFIX "Reading %d bytes from SPI
+    //   %s:", wSize, ok ? "ok" : "failed"));
+    for (i = 0; i < wSize; i++) {
         if ((*(pcData + i) == 0) || (*(pcData + i) == 0xff))
             count++;
         else
             count = 0;
-        if (count < 5)
-        {
+        if (count < 5) {
             DVCARD_DBG_MSG(9, printf("0x%x ", *(pcData + i)));
         }
     }
@@ -111,7 +113,7 @@ static eRESULT dvCard_Device_Read(WORD wSize, BYTE *pcData)
     return ok ? rcSUCCESS : rcERROR;
 #else
     return rcSUCCESS;
-#endif // 0
+#endif  // 0
 }
 
 // ==============================================================================
@@ -160,7 +162,7 @@ void dvCard_Initial(void)
 
     DVCARD_DBG_MSG(0, printf(DVCARD_DBG_PREFIX "SPI device %s.\n", spiOpen ? "open" : "FAILED"))
 
-    //m_xCardSemaphore = xSemaphoreCreateMutexStatic(&m_axCardSemaphoreBuffer);
+    // m_xCardSemaphore = xSemaphoreCreateMutexStatic(&m_axCardSemaphoreBuffer);
 
     dvCard_State_Reset(&m_sCardState);
 
@@ -186,15 +188,17 @@ void dvCard_Initial(void)
 // 2019/10/30, Leo Create
 // --------------------
 // ==============================================================================
-eRESULT dvCard_Command_Write(eCMD_MODULE eModule, BYTE cSubCmd, WORD wSize, BYTE *pcData)
+eRESULT dvCard_Command_Write(eCMD_MODULE eModule,
+                             BYTE cSubCmd,
+                             WORD wSize,
+                             BYTE *pcData)
 {
     eRESULT eResult = rcERROR;
     BYTE cRetry = RETRY_COUNT;
     sPAYLOAD sPayload;
     WORD wOutputSize = 0;
 
-    do
-    {
+    do {
         wOutputSize = wSize;
         dvCard_State_Reset(&m_sCardState);
 
@@ -203,16 +207,14 @@ eRESULT dvCard_Command_Write(eCMD_MODULE eModule, BYTE cSubCmd, WORD wSize, BYTE
         sPayload.cSubCmd = cSubCmd;
         wOutputSize++;
 
-        if(0 != wSize)
-        {
+        if (0 != wSize) {
             memcpy(sPayload.acData, pcData, wSize);
         }
 
         utilHost_PacketBuild(&m_sCardState.sMsgPacket, eDEVICE_DOCKING_BOARD, eDEVICE_GIM, ePAYLOAD_TYPE_EXE_WRITE, m_wSeqId, wOutputSize, &sPayload);
 
-        if(NULL != m_sCardState.fpWriteFunc)
-        {
-            m_sCardState.fpWriteFunc((HEAD_PACK_SIZE + m_sCardState.sMsgPacket.sPacketHeader.wPacketSize), (BYTE *)&m_sCardState.sMsgPacket);
+        if (NULL != m_sCardState.fpWriteFunc) {
+            m_sCardState.fpWriteFunc((HEAD_PACK_SIZE + m_sCardState.sMsgPacket.sPacketHeader.wPacketSize), (BYTE *) &m_sCardState.sMsgPacket);
         }
 
         // utilDelayMs(SLEEP_BTWN_RW);
@@ -221,43 +223,34 @@ eRESULT dvCard_Command_Write(eCMD_MODULE eModule, BYTE cSubCmd, WORD wSize, BYTE
         // utilCounterSet(eCOUNTER_TYPE_CARD_WRITE, TIME_OUT);
         // TODO: Use real timer instead of counter?
         unsigned long count = 0x3FFF;
-        while(eMSG_STATE_DATA_READY > m_sCardState.eMsgParsingState)
-        {
+        while (eMSG_STATE_DATA_READY > m_sCardState.eMsgParsingState) {
             utilHost_StateProcess(&m_sCardState, 100);
 
-            if(eMSG_STATE_DATA_READY == m_sCardState.eMsgParsingState)
-            {
-                if(m_wSeqId == m_sCardState.sMsgPacket.sPacketHeader.wSeqId)
-                {
-                    if((ePAYLOAD_TYPE_ACK == m_sCardState.sMsgPacket.sPacketHeader.cPacketType)
-                       && (eACK_TYPE_ACK == m_sCardState.sMsgPacket.uFormat.acPacketPayload[0]))
-                    {
+            if (eMSG_STATE_DATA_READY == m_sCardState.eMsgParsingState) {
+                if (m_wSeqId == m_sCardState.sMsgPacket.sPacketHeader.wSeqId) {
+                    if ((ePAYLOAD_TYPE_ACK == m_sCardState.sMsgPacket.sPacketHeader.cPacketType) && (eACK_TYPE_ACK == m_sCardState.sMsgPacket.uFormat.acPacketPayload[0])) {
                         eResult = rcSUCCESS;
                     }
-                }
-                else
-                {
+                } else {
                     // utilCounterSet(eCOUNTER_TYPE_CARD_WRITE, TIME_OUT);
                     count = 0x3FFF;
                     dvCard_State_Reset(&m_sCardState);
                 }
             }
 
-            if(count == 0)
-            {
+            if (count == 0) {
                 m_sCardState.eMsgParsingState = eMSG_STATE_TIMEOUT;
                 break;
             }
             count--;
         }
 
-        switch(m_sCardState.eMsgParsingState)
-        {
+        switch (m_sCardState.eMsgParsingState) {
         case eMSG_STATE_BAD_PACKET:
         case eMSG_STATE_TIMEOUT:
         case eMSG_STATE_RUN_OUT_OF_MEMORY:
         case eMSG_STATE_INITIAL_ERROR:
-            //utilDelayMs(RETRY_DELAY);
+            // utilDelayMs(RETRY_DELAY);
             usleep(RETRY_DELAY * 1000);
             DVCARD_DBG_MSG(7, printf(DVCARD_DBG_PREFIX "DB_Write retry\n"))
             eResult = rcERROR;
@@ -268,8 +261,7 @@ eRESULT dvCard_Command_Write(eCMD_MODULE eModule, BYTE cSubCmd, WORD wSize, BYTE
         }
 
         m_wSeqId++;
-    }
-    while((cRetry--) && (eResult == rcERROR));
+    } while ((cRetry--) && (eResult == rcERROR));
 
     return eResult;
 }
@@ -292,7 +284,10 @@ eRESULT dvCard_Command_Write(eCMD_MODULE eModule, BYTE cSubCmd, WORD wSize, BYTE
 // 2019/10/30, Leo Create
 // --------------------
 // ==============================================================================
-eRESULT dvCard_Command_Read(eCMD_MODULE eModule, BYTE cSubCmd, WORD wSize, BYTE *pcData)
+eRESULT dvCard_Command_Read(eCMD_MODULE eModule,
+                            BYTE cSubCmd,
+                            WORD wSize,
+                            BYTE *pcData)
 {
     eRESULT eResult = rcERROR;
     sPAYLOAD sPayload;
@@ -300,12 +295,11 @@ eRESULT dvCard_Command_Read(eCMD_MODULE eModule, BYTE cSubCmd, WORD wSize, BYTE 
     WORD wOutputSize = 0;
     WORD wIndex = 0;
 
-    //if(NULL != m_xCardSemaphore)
+    // if(NULL != m_xCardSemaphore)
     {
-        //if(pdPASS == xSemaphoreTake(m_xCardSemaphore, portMAX_DELAY))
+        // if(pdPASS == xSemaphoreTake(m_xCardSemaphore, portMAX_DELAY))
         {
-            do
-            {
+            do {
                 wOutputSize = 0;
                 dvCard_State_Reset(&m_sCardState);
 
@@ -314,16 +308,14 @@ eRESULT dvCard_Command_Read(eCMD_MODULE eModule, BYTE cSubCmd, WORD wSize, BYTE 
                 sPayload.cSubCmd = cSubCmd;
                 wOutputSize++;
 
-                if(0 != wSize)
-                {
+                if (0 != wSize) {
                     memcpy(sPayload.acData, pcData, wSize);
                 }
 
                 utilHost_PacketBuild(&m_sCardState.sMsgPacket, eDEVICE_DOCKING_BOARD, eDEVICE_GIM, ePAYLOAD_TYPE_EXE_READ, m_wSeqId, wOutputSize, &sPayload);
 
-                if(NULL != m_sCardState.fpWriteFunc)
-                {
-                    m_sCardState.fpWriteFunc((HEAD_PACK_SIZE + m_sCardState.sMsgPacket.sPacketHeader.wPacketSize), (BYTE *)&m_sCardState.sMsgPacket);
+                if (NULL != m_sCardState.fpWriteFunc) {
+                    m_sCardState.fpWriteFunc((HEAD_PACK_SIZE + m_sCardState.sMsgPacket.sPacketHeader.wPacketSize), (BYTE *) &m_sCardState.sMsgPacket);
                 }
 
                 // utilDelayMs(SLEEP_BTWN_RW);
@@ -334,62 +326,55 @@ eRESULT dvCard_Command_Read(eCMD_MODULE eModule, BYTE cSubCmd, WORD wSize, BYTE 
                 // utilCounterSet(eCOUNTER_TYPE_CARD_READ, TIME_OUT);
                 unsigned long count = 0x3FFF;
 
-                while(eMSG_STATE_DATA_READY > m_sCardState.eMsgParsingState)
-                {
+                while (eMSG_STATE_DATA_READY > m_sCardState.eMsgParsingState) {
                     utilHost_StateProcess(&m_sCardState, 100);
 
-                    if(eMSG_STATE_DATA_READY == m_sCardState.eMsgParsingState)
-                    {
-                        if(m_wSeqId == m_sCardState.sMsgPacket.sPacketHeader.wSeqId)
-                        {
-                            if(ePAYLOAD_TYPE_REPLY == m_sCardState.sMsgPacket.sPacketHeader.cPacketType)
-                            {
+                    if (eMSG_STATE_DATA_READY ==
+                        m_sCardState.eMsgParsingState) {
+                        if (m_wSeqId == m_sCardState.sMsgPacket.sPacketHeader.wSeqId) {
+                            if (ePAYLOAD_TYPE_REPLY == m_sCardState.sMsgPacket.sPacketHeader.cPacketType) {
                                 memcpy(pcData, m_sCardState.sMsgPacket.uFormat.acPacketPayload, m_sCardState.sMsgPacket.sPacketHeader.wPacketSize);
                                 DVCARD_DBG_MSG(9, printf(DVCARD_DBG_PREFIX "Read Size = %d\n", m_sCardState.sMsgPacket.sPacketHeader.wPacketSize));
                                 eResult = rcSUCCESS;
                             }
-                        }
-                        else
-                        {
-                            //utilCounterSet(eCOUNTER_TYPE_CARD_READ, TIME_OUT);
+                        } else {
+                            // utilCounterSet(eCOUNTER_TYPE_CARD_READ,
+                            // TIME_OUT);
                             count = 0x3FFF;
                             dvCard_State_Reset(&m_sCardState);
                         }
                     }
 
-                    if(count == 0)
-                    {
+                    if (count == 0) {
                         m_sCardState.eMsgParsingState = eMSG_STATE_TIMEOUT;
                         break;
                     }
                     count--;
                 }
 
-                switch(m_sCardState.eMsgParsingState)
-                {
-                    case eMSG_STATE_TIMEOUT:
-                        usleep(RETRY_DELAY * 1000);
-                        DVCARD_DBG_MSG(4, printf(DVCARD_DBG_PREFIX "DB_Read Timeout\n"))
-                        eResult = rcERROR;
-                        break;
-                    case eMSG_STATE_BAD_PACKET:
-                    case eMSG_STATE_RUN_OUT_OF_MEMORY:
-                    case eMSG_STATE_INITIAL_ERROR:
-                        // utilDelayMs(RETRY_DELAY);
-                        usleep(RETRY_DELAY * 1000);
-                        DVCARD_DBG_MSG(4, printf(DVCARD_DBG_PREFIX "DB_Read retry\n"))
-                        eResult = rcERROR;
-                        break;
+                switch (m_sCardState.eMsgParsingState) {
+                case eMSG_STATE_TIMEOUT:
+                    usleep(RETRY_DELAY * 1000);
+                    DVCARD_DBG_MSG(4, printf(DVCARD_DBG_PREFIX "DB_Read Timeout\n"))
+                    eResult = rcERROR;
+                    break;
+                case eMSG_STATE_BAD_PACKET:
+                case eMSG_STATE_RUN_OUT_OF_MEMORY:
+                case eMSG_STATE_INITIAL_ERROR:
+                    // utilDelayMs(RETRY_DELAY);
+                    usleep(RETRY_DELAY * 1000);
+                    DVCARD_DBG_MSG(4, printf(DVCARD_DBG_PREFIX "DB_Read retry\n"))
+                    eResult = rcERROR;
+                    break;
 
-                    default:
-                        break;
+                default:
+                    break;
                 }
 
                 m_wSeqId++;
-            }
-            while((cRetry--) && (eResult == rcERROR));
+            } while ((cRetry--) && (eResult == rcERROR));
 
-            //xSemaphoreGive(m_xCardSemaphore);
+            // xSemaphoreGive(m_xCardSemaphore);
         }
     }
 
@@ -418,12 +403,9 @@ BOOL dvCard_System_Ready_Get(BYTE *pcReady)
 
     eResult = dvCard_Command_Read(eCMD_MODULE_SYSTEM, eCMD_SYSTEM_READY, 0, pcReady);
 
-    if(rcSUCCESS == eResult)
-    {
+    if (rcSUCCESS == eResult) {
         DVCARD_DBG_MSG(7, printf(DVCARD_DBG_PREFIX "Ready %d\n", *pcReady))
-    }
-    else
-    {
+    } else {
         DVCARD_DBG_MSG(4, printf(DVCARD_DBG_PREFIX "System Ready Error\n"))
     }
 
@@ -532,7 +514,7 @@ BOOL dvCard_System_Card_Power_Get(WORD *pwEnable)
 
     return eResult == rcSUCCESS;
 }
-#endif // 0
+#endif  // 0
 
 // ==============================================================================
 // FUNCTION NAME: dvCard_System_Revision_Get
@@ -556,12 +538,9 @@ BOOL dvCard_System_Revision_Get(BYTE *pcVersion)
 
     eResult = dvCard_Command_Read(eCMD_MODULE_SYSTEM, eCMD_SYSTEM_VERSION, 0, pcVersion);
 
-    if(rcSUCCESS == eResult)
-    {
+    if (rcSUCCESS == eResult) {
         DVCARD_DBG_MSG(7, printf(DVCARD_DBG_PREFIX "Version %d, %d, %d, %d\n", pcVersion[0], pcVersion[1], pcVersion[2], pcVersion[3]))
-    }
-    else
-    {
+    } else {
         DVCARD_DBG_MSG(4, printf(DVCARD_DBG_PREFIX "Read Version Error\n"))
     }
 
@@ -800,7 +779,7 @@ BOOL dvCard_Slot_Info_Get(sSLOT_INFO *psSlotInfo)
 
     return eResult == rcSUCCESS;
 }
-#endif // 0
+#endif  // 0
 
 // ==============================================================================
 // FUNCTION NAME: dvCard_Slot_Ready_Get
@@ -824,16 +803,13 @@ BOOL dvCard_Slot_Ready_Get(BYTE *pcReady)
 
     eResult = dvCard_Command_Read(eCMD_MODULE_SYSTEM, eCMD_SYSTEM_SLOT_READY, 0, pcReady);
 
-    if(rcSUCCESS == eResult)
-    {
+    if (rcSUCCESS == eResult) {
         DVCARD_DBG_MSG(8, printf(DVCARD_DBG_PREFIX "Slot Ready %d, %d\r\n", *pcReady))
-    }
-    else
-    {
+    } else {
         DVCARD_DBG_MSG(8, printf(DVCARD_DBG_PREFIX "Read Slot Ready Error\r\n"))
     }
 
-    return eResult == rcSUCCESS? 1:0;
+    return eResult == rcSUCCESS ? 1 : 0;
 }
 
 #if 0
@@ -946,4 +922,4 @@ BOOL dvCard_Video_Info_Get(BYTE input, MODEINFO* modeInfo)
 
     return eResult == rcSUCCESS;
 }
-#endif // 0
+#endif  // 0

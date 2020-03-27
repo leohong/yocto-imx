@@ -3,6 +3,7 @@
 #define _TYPES_H_
 
 #include <wchar.h>
+#include <stdint.h>
 
 #define TRACEIF(...)
 #define ASSERT(...)
@@ -22,7 +23,9 @@ typedef double			DFLOAT;
 
 typedef signed char		CHAR;
 typedef unsigned short		WORD;
-typedef unsigned long		DWORD;
+//typedef unsigned long		DWORD;
+typedef uint32_t			D_WORD;
+
 
 typedef char * string;
 typedef wchar_t * wstring;

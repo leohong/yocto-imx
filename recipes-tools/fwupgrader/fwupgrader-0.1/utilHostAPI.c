@@ -13,18 +13,18 @@
 // #include "utilCounterAPI.h"
 // #include "utilLogAPI.h"
 // #include "utilCLICmdAPI.h"
-#include "string.h"
 #include "stdio.h"
+#include "string.h"
 
 #include "utilHostAPI.h"
 
 // 解封包狀態機資訊
-static sMSG_STATE_DATA      m_sMsgState;     // SM of Packet Type Data
+static sMSG_STATE_DATA m_sMsgState;  // SM of Packet Type Data
 
 // task stack - start -
-//static StaticTask_t m_xHostTaskTCB;
-//static StackType_t m_axHostStack[EVENT_TASK_STACK_SZ];
-//static TaskHandle_t xHost_Handle = NULL;
+// static StaticTask_t m_xHostTaskTCB;
+// static StackType_t m_axHostStack[EVENT_TASK_STACK_SZ];
+// static TaskHandle_t xHost_Handle = NULL;
 // task stack - end -
 
 // ==============================================================================
@@ -70,15 +70,14 @@ static void utilHost_StateReset(sMSG_STATE_DATA *psMsgData)
 static void utilHost_Package_Print(sMSG_STATE_DATA *psMsgData)
 {
     WORD wCount = 0;
-    BYTE *pcBuffer = (BYTE *)(&psMsgData->sMsgPacket);
+    BYTE *pcBuffer = (BYTE *) (&psMsgData->sMsgPacket);
 
     printf("MSK_LIST_HOST, \n");
-    for(wCount = 0; wCount <= (HEAD_PACK_SIZE + psMsgData->sMsgPacket.sPacketHeader.wPacketSize); wCount++)
-    {
+    for (wCount = 0; wCount <= (HEAD_PACK_SIZE + psMsgData->sMsgPacket.sPacketHeader.wPacketSize); wCount++) {
         printf("0x%02X ", *(pcBuffer + wCount));
     }
 
-    (void)pcBuffer;
+    (void) pcBuffer;
 
     printf("MSK_LIST_HOST, \n");
 }
@@ -107,122 +106,95 @@ static void utilHost_Package_Print(sMSG_STATE_DATA *psMsgData)
 // 12/07/2013, Leo written
 // --------------------
 // ==============================================================================
-eMSG_STATE utilHost_StateProcess(sMSG_STATE_DATA *psMsgData, DWORD dwMilliSecond)
+eMSG_STATE utilHost_StateProcess(sMSG_STATE_DATA *psMsgData, D_WORD dwMilliSecond)
 {
     BYTE cReadBuffer = 0;
 
-    if(NULL == psMsgData->fpReadFunc)
-    {
-        //vTaskSuspend(NULL);
+    if (NULL == psMsgData->fpReadFunc) {
+        // vTaskSuspend(NULL);
         return eMSG_STATE_INITIAL_ERROR;
     }
 
-    if(rcSUCCESS == psMsgData->fpReadFunc(1, &cReadBuffer))
-    {
-        //printf("MSK_LIST_HOST, 0x%02X ", cReadBuffer);
+    if (rcSUCCESS == psMsgData->fpReadFunc(1, &cReadBuffer)) {
+        // printf("MSK_LIST_HOST, 0x%02X ", cReadBuffer);
 
-        switch(psMsgData->eMsgParsingState)
-        {
-            case eMSG_STATE_MAGIC_NUMBER:
-            {
-                psMsgData->sMsgPacket.cMagicNumber2 = cReadBuffer;
+        switch (psMsgData->eMsgParsingState) {
+        case eMSG_STATE_MAGIC_NUMBER: {
+            psMsgData->sMsgPacket.cMagicNumber2 = cReadBuffer;
 
-                if((MAGICNUMBER1 == psMsgData->sMsgPacket.cMagicNumber1) && (MAGICNUMBER2 == psMsgData->sMsgPacket.cMagicNumber2))
-                {
-                    psMsgData->eMsgParsingState = eMSG_STATE_PACKET_HEADER;
+            if ((MAGICNUMBER1 == psMsgData->sMsgPacket.cMagicNumber1) && (MAGICNUMBER2 == psMsgData->sMsgPacket.cMagicNumber2)) {
+                psMsgData->eMsgParsingState = eMSG_STATE_PACKET_HEADER;
+                psMsgData->wRecivedByteCount = 0;
+                psMsgData->wRecivedByteCRC = 0;
+                // printf("\n\n");
+            } else {
+                psMsgData->sMsgPacket.cMagicNumber1 = psMsgData->sMsgPacket.cMagicNumber2;
+            }
+        } break;
+
+        case eMSG_STATE_PACKET_HEADER: {
+            BYTE *pcBuffer = (BYTE *) &psMsgData->sMsgPacket.sPacketHeader;
+            *(pcBuffer + psMsgData->wRecivedByteCount++) = cReadBuffer;
+
+            // printf("0x%02X ", cReadBuffer);
+
+            if (HEADERSIZE == psMsgData->wRecivedByteCount) {
+                if (MAX_PACKET_SIZE >= psMsgData->sMsgPacket.sPacketHeader.wPacketSize) {
                     psMsgData->wRecivedByteCount = 0;
-                    psMsgData->wRecivedByteCRC = 0;
-                    //printf("\n\n");
-                }
-                else
-                {
-                    psMsgData->sMsgPacket.cMagicNumber1 = psMsgData->sMsgPacket.cMagicNumber2;
-                }
-            }
-            break;
+                    psMsgData->eMsgParsingState = eMSG_STATE_PACKET_PAYLOAD;
 
-            case eMSG_STATE_PACKET_HEADER:
-            {
-                BYTE *pcBuffer = (BYTE *)&psMsgData->sMsgPacket.sPacketHeader;
-                *(pcBuffer + psMsgData->wRecivedByteCount++) = cReadBuffer;
-
-                //printf("0x%02X ", cReadBuffer);
-
-                if(HEADERSIZE == psMsgData->wRecivedByteCount)
-                {
-                    if(MAX_PACKET_SIZE >= psMsgData->sMsgPacket.sPacketHeader.wPacketSize)
-                    {
-                        psMsgData->wRecivedByteCount = 0;
-                        psMsgData->eMsgParsingState = eMSG_STATE_PACKET_PAYLOAD;
-
-                        // 計算CRC
-                        psMsgData->wRecivedByteCRC += psMsgData->sMsgPacket.sPacketHeader.cSource;
-                        psMsgData->wRecivedByteCRC += psMsgData->sMsgPacket.sPacketHeader.cDestination;
-                        psMsgData->wRecivedByteCRC += psMsgData->sMsgPacket.sPacketHeader.cPacketType;
-                        psMsgData->wRecivedByteCRC += ((psMsgData->sMsgPacket.sPacketHeader.wSeqId >> 8) & 0x00FF);
-                        psMsgData->wRecivedByteCRC += (psMsgData->sMsgPacket.sPacketHeader.wSeqId & 0x00FF);
-                        psMsgData->wRecivedByteCRC += ((psMsgData->sMsgPacket.sPacketHeader.wPacketSize >> 8) & 0x00FF) ;
-                        psMsgData->wRecivedByteCRC += (psMsgData->sMsgPacket.sPacketHeader.wPacketSize & 0x00FF);
-                        // 不帶Payload資料,檢查CRC
-                        if(0 == psMsgData->sMsgPacket.sPacketHeader.wPacketSize)
-                        {
-                            if(0 == (0xFFFF & (psMsgData->sMsgPacket.sPacketHeader.wChecksum +
-                                               psMsgData->wRecivedByteCRC)))
-                            {
-                                psMsgData->eMsgParsingState = eMSG_STATE_DATA_READY;
-                            }
-                            else
-                            {
-                                printf("CRC ERROR\n");
-                                //utilHost_Package_Print(psMsgData);
-                                psMsgData->eMsgParsingState = eMSG_STATE_BAD_PACKET;
-                            }
-
-                            return psMsgData->eMsgParsingState;
+                    // 計算CRC
+                    psMsgData->wRecivedByteCRC += psMsgData->sMsgPacket.sPacketHeader.cSource;
+                    psMsgData->wRecivedByteCRC += psMsgData->sMsgPacket.sPacketHeader.cDestination;
+                    psMsgData->wRecivedByteCRC += psMsgData->sMsgPacket.sPacketHeader.cPacketType;
+                    psMsgData->wRecivedByteCRC += ((psMsgData->sMsgPacket.sPacketHeader.wSeqId >> 8) & 0x00FF);
+                    psMsgData->wRecivedByteCRC += (psMsgData->sMsgPacket.sPacketHeader.wSeqId & 0x00FF);
+                    psMsgData->wRecivedByteCRC += ((psMsgData->sMsgPacket.sPacketHeader.wPacketSize >> 8) & 0x00FF);
+                    psMsgData->wRecivedByteCRC += (psMsgData->sMsgPacket.sPacketHeader.wPacketSize & 0x00FF);
+                    // 不帶Payload資料,檢查CRC
+                    if (0 == psMsgData->sMsgPacket.sPacketHeader.wPacketSize) {
+                        if (0 == (0xFFFF & (psMsgData->sMsgPacket.sPacketHeader.wChecksum + psMsgData->wRecivedByteCRC))) {
+                            psMsgData->eMsgParsingState = eMSG_STATE_DATA_READY;
+                        } else {
+                            printf("CRC ERROR\n");
+                            // utilHost_Package_Print(psMsgData);
+                            psMsgData->eMsgParsingState = eMSG_STATE_BAD_PACKET;
                         }
+
+                        return psMsgData->eMsgParsingState;
                     }
-                    else
-                    {
-                        printf("OVER SIZE\n");
-                        //utilHost_Package_Print(psMsgData);
-                        psMsgData->eMsgParsingState = eMSG_STATE_BAD_PACKET;
-                        return eMSG_STATE_BAD_PACKET;
-                    }
+                } else {
+                    printf("OVER SIZE\n");
+                    // utilHost_Package_Print(psMsgData);
+                    psMsgData->eMsgParsingState = eMSG_STATE_BAD_PACKET;
+                    return eMSG_STATE_BAD_PACKET;
                 }
             }
-            break;
+        } break;
 
-            case eMSG_STATE_PACKET_PAYLOAD:
-            {
-                psMsgData->wRecivedByteCRC += cReadBuffer;
-                psMsgData->sMsgPacket.uFormat.acPacketPayload[psMsgData->wRecivedByteCount++] = cReadBuffer;
+        case eMSG_STATE_PACKET_PAYLOAD: {
+            psMsgData->wRecivedByteCRC += cReadBuffer;
+            psMsgData->sMsgPacket.uFormat.acPacketPayload[psMsgData->wRecivedByteCount++] = cReadBuffer;
 
-                if(psMsgData->sMsgPacket.sPacketHeader.wPacketSize == psMsgData->wRecivedByteCount)
-                {
-                    if(0 == (0xFFFF & (psMsgData->sMsgPacket.sPacketHeader.wChecksum + psMsgData->wRecivedByteCRC)))
-                    {
-                        psMsgData->eMsgParsingState = eMSG_STATE_DATA_READY;
-                        //printf("\n");
-                    }
-                    else
-                    {
-                        printf("CRC ERROR\n");
-                        //utilHost_Package_Print(psMsgData);
-                        psMsgData->eMsgParsingState = eMSG_STATE_BAD_PACKET;
-                    }
-
-                    return psMsgData->eMsgParsingState;
+            if (psMsgData->sMsgPacket.sPacketHeader.wPacketSize == psMsgData->wRecivedByteCount) {
+                if (0 == (0xFFFF & (psMsgData->sMsgPacket.sPacketHeader.wChecksum + psMsgData->wRecivedByteCRC))) {
+                    psMsgData->eMsgParsingState = eMSG_STATE_DATA_READY;
+                    // printf("\n");
+                } else {
+                    printf("CRC ERROR\n");
+                    // utilHost_Package_Print(psMsgData);
+                    psMsgData->eMsgParsingState = eMSG_STATE_BAD_PACKET;
                 }
-            }
-            break;
 
-            default:
                 return psMsgData->eMsgParsingState;
-                //break;
+            }
+        } break;
+
+        default:
+            return psMsgData->eMsgParsingState;
+            // break;
         }
-    }
-    else
-    {
+    } else {
         printf("MSK_LIST_HOST, Read failed!\n");
         psMsgData->eMsgParsingState = eMSG_STATE_BAD_PACKET;
     }
@@ -259,11 +231,10 @@ static void utilHost_CheckSumCalc(sMSG_PACKET_FORMAT *psPacket)
     wChecksum += psPacket->sPacketHeader.cPacketType;
     wChecksum += ((psPacket->sPacketHeader.wSeqId >> 8) & 0x00FF);
     wChecksum += (psPacket->sPacketHeader.wSeqId & 0x00FF);
-    wChecksum += ((psPacket->sPacketHeader.wPacketSize >> 8) & 0x00FF) ;
+    wChecksum += ((psPacket->sPacketHeader.wPacketSize >> 8) & 0x00FF);
     wChecksum += (psPacket->sPacketHeader.wPacketSize & 0x00FF);
 
-    for(wCount = 0; wCount < psPacket->sPacketHeader.wPacketSize; wCount++)
-    {
+    for (wCount = 0; wCount < psPacket->sPacketHeader.wPacketSize; wCount++) {
         wChecksum += psPacket->uFormat.acPacketPayload[wCount];
     }
 
@@ -296,7 +267,10 @@ static void utilHost_CheckSumCalc(sMSG_PACKET_FORMAT *psPacket)
 // 15/07/2013, Leo written
 // --------------------
 // ==============================================================================
-static void utilHost_Ack_Build(sMSG_PACKET_FORMAT *psPacket, eDEVICE eSource, eDEVICE eDestination, eACK_TYPE eAckType)
+static void utilHost_Ack_Build(sMSG_PACKET_FORMAT *psPacket,
+                               eDEVICE eSource,
+                               eDEVICE eDestination,
+                               eACK_TYPE eAckType)
 {
     psPacket->cMagicNumber1 = MAGICNUMBER1;
     psPacket->cMagicNumber2 = MAGICNUMBER2;
@@ -330,7 +304,13 @@ static void utilHost_Ack_Build(sMSG_PACKET_FORMAT *psPacket, eDEVICE eSource, eD
 // 12/07/2013, Leo written
 // --------------------
 // ==============================================================================
-void utilHost_PacketBuild(sMSG_PACKET_FORMAT *psPacket, eDEVICE eSource, eDEVICE eDestination, ePAYLOAD_TYPE ePayloadType, WORD wSeqId, WORD wDataSize, sPAYLOAD *psPayload)
+void utilHost_PacketBuild(sMSG_PACKET_FORMAT *psPacket,
+                          eDEVICE eSource,
+                          eDEVICE eDestination,
+                          ePAYLOAD_TYPE ePayloadType,
+                          WORD wSeqId,
+                          WORD wDataSize,
+                          sPAYLOAD *psPayload)
 {
     psPacket->cMagicNumber1 = MAGICNUMBER1;
     psPacket->cMagicNumber2 = MAGICNUMBER2;
@@ -343,4 +323,3 @@ void utilHost_PacketBuild(sMSG_PACKET_FORMAT *psPacket, eDEVICE eSource, eDEVICE
 
     utilHost_CheckSumCalc(psPacket);
 }
-
