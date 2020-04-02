@@ -923,3 +923,40 @@ BOOL dvCard_Video_Info_Get(BYTE input, MODEINFO* modeInfo)
     return eResult == rcSUCCESS;
 }
 #endif  // 0
+BOOL dvCard_Slot_OPS_Power_Set(void)
+{
+    eRESULT eResult = rcERROR;
+    eResult = dvCard_Command_Write(eCMD_MODULE_SYSTEM, eCMD_SYSTEM_OPS_POWER, 0, NULL);
+
+    if(rcSUCCESS == eResult)
+    {
+        DVCARD_DBG_MSG(7, printf(DVCARD_DBG_PREFIX "OPS Power Set Pass\n"))
+    }
+    else
+    {
+        DVCARD_DBG_MSG(4, printf(DVCARD_DBG_PREFIX "OPS Power Set Fail\n"))
+    }
+
+    return eResult == rcSUCCESS;
+}
+
+BOOL dvCard_Slot_OPS_Power_Get(void)
+{
+    BOOL ret = FALSE;
+    eRESULT eResult = rcERROR;
+    eResult = dvCard_Command_Read(eCMD_MODULE_SYSTEM, eCMD_SYSTEM_OPS_POWER, 0, &ret);
+
+    if(rcSUCCESS == eResult)
+    {
+        DVCARD_DBG_MSG(7, printf(DVCARD_DBG_PREFIX "OPS Power Set Pass\n"))
+    }
+    else
+    {
+        DVCARD_DBG_MSG(4, printf(DVCARD_DBG_PREFIX "OPS Power Set Fail\n"))
+    }
+
+    return ret;
+}
+
+
+

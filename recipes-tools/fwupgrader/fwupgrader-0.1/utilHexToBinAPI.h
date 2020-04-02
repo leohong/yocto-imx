@@ -49,7 +49,6 @@ eH2B_STATE utilIntelHexConverter(WORD wNumData, sINTELHEX *psHexData,
 struct node {
     int address;
     int size;
-    // int pageSize;
     struct node *next;
     char *pcBuffer;
 };

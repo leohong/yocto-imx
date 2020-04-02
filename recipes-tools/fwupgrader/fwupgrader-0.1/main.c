@@ -38,17 +38,16 @@ int main(int argc, char **argv)
 		printf("Checksum %x\n", psTag->dwCodeChecksum);
 
     } else {
-        printf("Not Found!\n");
+        printf("Not Found!!\n");
     }
 
     if (TRUE == utilIntel_Hex_List_Find(&sHeader, 0x1A008200, &sAppCode)) {
         printf("Address = %X\n", sAppCode.address);
         printf("Size = %x\n", sAppCode.size);
 
-        upgrade(0x1A008200, 1024, sAppCode.pcBuffer, sAppCode.size);
+        upgrade(psTag, 1024, sAppCode.pcBuffer, sAppCode.size);
     } else {
         printf("Not Found!\n");
     }
-
     return 0;
 }

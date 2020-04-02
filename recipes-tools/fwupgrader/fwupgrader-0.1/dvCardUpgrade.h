@@ -26,7 +26,8 @@ BOOL programPage(D_WORD dwAddress);
 BOOL writeTag(D_WORD dwFwVersion);
 BOOL goToAppCode();
 // void loadFile(const QString &fileName);
-BOOL upgrade(const D_WORD dwStartAddr, const WORD wPageSize, BYTE *pcBin, D_WORD dwSize);
+BOOL upgrade(const sMEM_TAG_PARAM *psMemTag, const WORD wPageSize, BYTE *pcBin, D_WORD dwSize);
+//BOOL upgrade(const D_WORD dwStartAddr, const WORD wPageSize, BYTE *pcBin, D_WORD dwSize);
 
 
 #endif  // DVCARDUPGRADE_H

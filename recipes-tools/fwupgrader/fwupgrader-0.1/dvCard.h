@@ -54,6 +54,7 @@ typedef enum {
     eCMD_SYSTEM_CARD_POWER,
     eCMD_SYSTEM_SLOT_INFO,
     eCMD_SYSTEM_SLOT_READY,
+    eCMD_SYSTEM_OPS_POWER,
 
     eCMD_SYSTEM_NUMBER,
 } eCMD_SYSTEM;
@@ -199,13 +200,9 @@ BOOL dvCard_Slot_Ready_Get(BYTE *pcReady);
 // BOOL dvCard_Video_Info_Get(BYTE input, MODEINFO* modeInfo);
 
 // TODO: Audio info!
-eRESULT dvCard_Command_Write(eCMD_MODULE eModule,
-                             BYTE cSubCmd,
-                             WORD wSize,
-                             BYTE *pcData);
-eRESULT dvCard_Command_Read(eCMD_MODULE eModule,
-                            BYTE cSubCmd,
-                            WORD wSize,
-                            BYTE *pcData);
+eRESULT dvCard_Command_Write(eCMD_MODULE eModule, BYTE cSubCmd, WORD wSize, BYTE *pcData);
+eRESULT dvCard_Command_Read(eCMD_MODULE eModule,  BYTE cSubCmd, WORD wSize,  BYTE *pcData);
 
+BOOL dvCard_Slot_OPS_Power_Set(void);
+BOOL dvCard_Slot_OPS_Power_Get(void);
 #endif  // DVCARD_H

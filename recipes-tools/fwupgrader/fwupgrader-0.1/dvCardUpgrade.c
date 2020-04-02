@@ -1,9 +1,9 @@
 
-#include "dvCardUpgrade.h"
+
 #include <stdio.h>
 #include <string.h>
 #include "dvCard.h"
-
+#include "dvCardUpgrade.h"
 
 void readFwVersion() {}
 
@@ -93,14 +93,13 @@ BOOL goToAppCode()
     return ret;
 }
 
-BOOL upgrade(const D_WORD dwStartAddr, const WORD wPageSize, BYTE *pcBin, D_WORD dwSize)
-//BOOL upgrade(const sMEM_TAG_PARAM *psTag, const WORD wPageSize, BYTE *pcBin, D_WORD dwSize)
+BOOL upgrade(const sMEM_TAG_PARAM *psMemTag, const WORD wPageSize, BYTE *pcBin, D_WORD dwSize)
 {
-    D_WORD dwVersion = 0x1234;
+    D_WORD dwVersion = psMemTag->dwCodeVersion;
     D_WORD dwChecksum = 0;
     D_WORD dwAddress = 0, i = 0;
 
-    dwAddress = dwStartAddr;
+    dwAddress = psMemTag->dwCodeStartupAddress;
 
     // 1. go to bootloader
     printf("1. Go to bootloader\n");
